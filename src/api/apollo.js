@@ -15,7 +15,7 @@ const authLink = setContext((_, { headers }) => {
 
 // Usamos createUploadLink em vez de createHttpLink
 const uploadLink = createUploadLink({
-  uri: 'http://localhost:8000/graphql/',
+  uri: import.meta.env.VITE_API_URL + "/graphql/",
 });
 
 export const client = new ApolloClient({
