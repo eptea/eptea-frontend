@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { useQuery, gql } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
-import NavBar from "../layouts/NavBar";
+import NavBar from "../layouts/Navbar";
 import Sidebar from "../layouts/Sidebar";
 
 const GET_DASHBOARD_DATA = gql`
