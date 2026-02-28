@@ -21,8 +21,9 @@ import StudentList from '../features/users/StudentList';
 import StudentDossie from '../features/planning/StudentDossie';
 import SubjectStudents from '../features/planning/SubjectStudents';
 
-// --- DASHBOARD ---
+// --- DASHBOARD & ADMIN GLOBAL ---
 import Dashboard from '../pages/Dashboard';
+import InstitutionList from '../features/admin/InstitutionList'; // Novo componente
 import CreateInstitution from '../features/institutions/CreateInstitution';
 
 export const AppRoutes = () => (
@@ -36,6 +37,9 @@ export const AppRoutes = () => (
       {/* 📊 Principal */}
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/profile" element={<Profile />} />
+      
+      {/* 🏢 Gestão Global (Superuser) */}
+      <Route path="/institutions" element={<InstitutionList />} />
       
       {/* 🏫 Fluxo Acadêmico Hierárquico */}
       <Route path="/courses" element={<CourseManagement />} />

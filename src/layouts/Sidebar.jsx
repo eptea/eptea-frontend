@@ -5,9 +5,14 @@ export default function Sidebar({ user }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Ajustamos o path de Turmas para /courses, que é a porta de entrada agora
   const menuItems = [
-    { label: 'Início', icon: '📊', path: '/dashboard', roles: ['management', 'aee', 'teacher'] },
+    // Início visível para todos
+    { label: 'Início', icon: '📊', path: '/dashboard', roles: ['management', 'aee', 'teacher', 'superuser'] },
+    
+    // Exclusivo do Superuser (Equipe EPTEA)
+    { label: 'Instituições', icon: '🏢', path: '/institutions', roles: ['superuser'] },
+
+    // Itens das Escolas (Ocultos para o Superuser)
     { label: 'Alunos TEA', icon: '🎓', path: '/students', roles: ['management', 'aee'] },
     { label: 'Cursos e Turmas', icon: '🏫', path: '/courses', roles: ['management', 'aee', 'teacher'] },
     { label: 'Corpo Docente', icon: '👥', path: '/staff', roles: ['management', 'aee'] },
@@ -17,14 +22,14 @@ export default function Sidebar({ user }) {
   return (
     <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-100 h-[calc(100vh-4.5rem)] sticky top-[4.5rem] z-30">
       <div className="p-6 space-y-2 flex-1">
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 ml-2">Menu Principal</p>
+        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6 ml-2">
+            {user?.userType === 'superuser' ? 'Painel Admin Global' : 'Menu Principal'}
+        </p>
         
         {menuItems
           .filter(item => item.roles.includes(user?.userType))
           .map((item) => {
-            // Mudamos para startsWith para que o ícone continue aceso quando você entrar em uma turma específica
             const isActive = location.pathname.startsWith(item.path);
-            
             return (
               <button
                 key={item.path}
