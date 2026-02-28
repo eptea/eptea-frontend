@@ -4,7 +4,7 @@ import { useQuery, useMutation, gql } from "@apollo/client";
 import Swal from "sweetalert2";
 
 // Componentes de Layout
-import NavBar from "../../layouts/NavBar";
+import NavBar from "../../layouts/Navbar";
 import Sidebar from "../../layouts/Sidebar";
 
 // Sub-componentes do Dossiê

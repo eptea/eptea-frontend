@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import Swal from 'sweetalert2';
-import NavBar from '../../layouts/NavBar';
+import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
 
 const GET_SUBJECTS_PAGE = gql`

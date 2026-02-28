@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import NavBar from '../../layouts/NavBar';
+import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
 
 const GET_COURSE_CLASSES_DATA = gql`

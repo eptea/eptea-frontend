@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, gql } from '@apollo/client';
 import Swal from 'sweetalert2';
-import NavBar from '../../layouts/NavBar';
+import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
 
 const GET_CLASS_AND_RESOURCES = gql`
