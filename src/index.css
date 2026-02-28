@@ -1,0 +1,10 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Garante que o root ocupe a tela toda */
+#root {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
