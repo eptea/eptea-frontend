@@ -44,6 +44,8 @@ export default function ClassDetail() {
   const turma = data?.classGroupById;
   const isTeacher = user?.userType === 'teacher';
 
+  const hasSubjectInClass = turma?.teachingassignmentSet?.some(a => a.teacher.id === user?.id);
+
   const handleCreate = async () => {
     try {
       await createSub({ variables: { name: subName, classId: id } });
@@ -63,9 +65,9 @@ export default function ClassDetail() {
               <h2 className="text-4xl font-black text-slate-800 italic">{turma?.name}</h2>
               <p className="text-slate-400 font-bold text-xs uppercase">Disciplinas Ativas</p>
             </div>
-            {isTeacher && (
+            {isTeacher && !hasSubjectInClass && (
               <button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg">
-                ➕ Atuar nesta Turma
+                ➕ Adicionar Minha Disciplina
               </button>
             )}
           </div>
