@@ -20,7 +20,7 @@ import AdaAssistantModal from "../../components/dossie/AdaAssistantModal";
 
 // --- QUERIES ---
 const GET_STUDENT_DOSSIE = gql`
-  query GetDossie($id: ID!, $subjectId: ID) {
+  query GetDossie($id: ID!, $subjectId: ID, $teacherId: ID!) {
     me {
       id username firstName lastName userType profileImage
       institution { name }
@@ -66,7 +66,7 @@ export default function StudentDossie() {
   const currentSubjectId = new URLSearchParams(location.search).get("subjectId");
 
   const { data, loading, refetch, error } = useQuery(GET_STUDENT_DOSSIE, {
-    variables: { id, subjectId: currentSubjectId },
+    variables: { id, subjectId: currentSubjectId, teacherId: user?.id },
     fetchPolicy: "network-only",
   });
 
