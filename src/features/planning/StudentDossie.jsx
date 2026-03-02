@@ -40,7 +40,7 @@ const GET_STUDENT_DOSSIE = gql`
         pedagogicalGuidelines certificationType
       }
     }
-    subjectAccessibilityPlan(studentId: $id, subjectId: $subjectId) {
+    subjectAccessibilityPlan(studentId: $id, subjectId: $subjectId, teacherId: $teacherId) {
       id programmaticContent objectives methodology evaluation
     }
   }
