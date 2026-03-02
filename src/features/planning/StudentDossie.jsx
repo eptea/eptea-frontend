@@ -206,7 +206,7 @@ export default function StudentDossie() {
                 </div>
               </div>
 
-              {currentSubjectId && <StudentForum studentId={id} subjectId={currentSubjectId} userType={user?.userType} />}
+              {currentSubjectId && <StudentForum studentId={id} subjectId={currentSubjectId} teacherId={currentTeacherId} userType={user?.userType} />}
             </div>
 
             {/* SIDEBAR DE DOCUMENTOS ATUALIZADA */}

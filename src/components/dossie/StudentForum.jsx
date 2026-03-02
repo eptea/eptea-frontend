@@ -3,8 +3,8 @@ import { useMutation, useQuery, gql } from "@apollo/client";
 import Swal from "sweetalert2";
 
 const GET_OBSERVATIONS = gql`
-  query GetObs($studentId: ID!, $subjectId: ID) {
-    studentObservations(studentId: $studentId, subjectId: $subjectId) {
+  query GetObs($studentId: ID!, $subjectId: ID, $teacherId: ID) {
+    studentObservations(studentId: $studentId, subjectId: $subjectId, teacherId: $teacherId) {
       id
       content
       createdAt
@@ -22,12 +22,14 @@ const POST_OBS = gql`
   mutation PostObs(
     $studentId: ID!
     $subjectId: ID
+    $teacherId: ID
     $content: String!
     $file: Upload
   ) {
     postObservation(
       studentId: $studentId
       subjectId: $subjectId
+      teacherId: $teacherId
       content: $content
       file: $file
     ) {
@@ -36,14 +38,14 @@ const POST_OBS = gql`
   }
 `;
 
-export default function StudentForum({ studentId, subjectId, userType }) {
+export default function StudentForum({ studentId, subjectId, teacherId, userType }) {
   const [text, setText] = useState("");
   const [file, setFile] = useState(null);
   const bottomRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const { data, loading, refetch } = useQuery(GET_OBSERVATIONS, {
-    variables: { studentId, subjectId },
+    variables: { studentId, subjectId, teacherId },
     pollInterval: 3000,
     fetchPolicy: "network-only",
   });
@@ -64,6 +66,7 @@ export default function StudentForum({ studentId, subjectId, userType }) {
         variables: {
           studentId,
           subjectId,
+          teacherId,
           content: text || "",
           file,
         },
