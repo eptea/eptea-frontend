@@ -20,7 +20,7 @@ import AdaAssistantModal from "../../components/dossie/AdaAssistantModal";
 
 // --- QUERIES ---
 const GET_STUDENT_DOSSIE = gql`
-  query GetDossie($id: ID!, $subjectId: ID!, $teacherId: ID) {
+  query GetDossie($id: ID!, $subjectId: ID, $teacherId: ID) {
     me {
       id
       username
@@ -103,10 +103,10 @@ export default function StudentDossie() {
   const { data, loading, refetch, error } = useQuery(GET_STUDENT_DOSSIE, {
   variables: {
     id,
-    subjectId: currentSubjectId,
-    teacherId: currentTeacherId, // só será usado se backend precisar
+    subjectId: currentSubjectId || null,
+    teacherId: currentTeacherId || null, // só será usado se backend precisar
   },
-  skip: !id || !currentSubjectId,
+  skip: !id,
   fetchPolicy: "network-only",
 });
 
