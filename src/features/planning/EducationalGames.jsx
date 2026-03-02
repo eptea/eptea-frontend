@@ -24,13 +24,6 @@ const STATIC_GAMES = [
     description: "Identifique expressões faciais e situações sociais para ganhar pontos e evoluir o avatar.",
     image: "https://images.unsplash.com/photo-1610116306796-6fea9f4fae38?w=400&q=80",
     category: "SOCIAL"
-  },
-  {
-    id: 3,
-    title: "Lógica Geo-Quiz",
-    description: "Explore mapas interativos e resolva problemas matemáticos aplicados à geografia.",
-    image: "https://images.unsplash.com/photo-1586717791821-3f44a563eb4c?w=400&q=80",
-    category: "COGNITIVO"
   }
 ];
 
