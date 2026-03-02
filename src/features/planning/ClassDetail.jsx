@@ -116,7 +116,7 @@ export default function ClassDetail() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {assignments.map(a => (
-              <div key={a.id} onClick={() => navigate(`/classes/${id}/subject/${a.subject.id}`)} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all cursor-pointer group">
+              <div key={a.id} onClick={() => navigate(`/classes/${id}/subject/${a.subject.id}?teacherId=${a.teacher.id}`)} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all cursor-pointer group">
                 <div className="flex justify-between items-start mb-6">
                    <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-inner">📚</div>
                    <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest bg-slate-50 px-3 py-1 rounded-full">Disciplina</span>
