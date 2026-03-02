@@ -16,7 +16,8 @@ export default function Sidebar({ user }) {
     { label: 'Alunos TEA', icon: '🎓', path: '/students', roles: ['management', 'aee'] },
     { label: 'Cursos e Turmas', icon: '🏫', path: '/courses', roles: ['management', 'aee', 'teacher'] },
     { label: 'Corpo Docente', icon: '👥', path: '/staff', roles: ['management', 'aee'] },
-    { label: 'Disciplinas', icon: '📚', path: '/subjects', roles: ['management', 'aee'] },
+    { label: 'Jogos Educativos', icon: '🎮', path: '/games', roles: ['management', 'aee', 'teacher'] },
+    // { label: 'Disciplinas', icon: '📚', path: '/subjects', roles: ['management', 'aee'] },
   ];
 
   return (

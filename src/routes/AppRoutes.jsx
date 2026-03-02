@@ -26,6 +26,8 @@ import Dashboard from '../pages/Dashboard';
 import InstitutionList from '../features/admin/InstitutionList'; // Novo componente
 import CreateInstitution from '../features/institutions/CreateInstitution';
 
+import EducationalGames from '../features/planning/EducationalGames';
+
 export const AppRoutes = () => (
   <Routes>
     {/* Rota Pública */}
@@ -62,6 +64,8 @@ export const AppRoutes = () => (
       {/* 🔒 Segurança */}
       <Route path="/change-password" element={<ChangePassword />} />
       <Route path="/complete-profile" element={<CompleteProfile />} />
+
+      <Route path="/games" element={<EducationalGames />} />
       
     </Route>
 
