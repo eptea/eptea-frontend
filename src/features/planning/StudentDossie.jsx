@@ -256,7 +256,7 @@ export default function StudentDossie() {
       {currentSubjectId && ["teacher", "aee"].includes(user?.userType) && <button onClick={() => setIsAdaOpen(true)} className="fixed bottom-10 right-10 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 text-2xl">✨</button>}
       {isEditingGlobal && <ModalDossie form={form} setForm={setForm} onClose={() => setIsEditingGlobal(false)} onSave={handleSaveGlobal} />}
       {isEditingSubject && <ModalSubjectPlan form={subjectForm} setForm={setSubjectForm} onClose={() => setIsEditingSubject(false)} onSave={handleSaveSubject} />}
-      {currentSubjectId && <AdaAssistantModal isOpen={isAdaOpen} onClose={() => setIsAdaOpen(false)} studentId={id} subjectId={currentSubjectId} />}
+      {currentSubjectId && <AdaAssistantModal isOpen={isAdaOpen} onClose={() => setIsAdaOpen(false)} studentId={id} subjectId={currentSubjectId} teacherId={currentTeacherId}/>}
     </div>
   );
 }
