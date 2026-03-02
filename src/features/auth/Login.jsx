@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import logo from '../assets/logo.png';
+import logo from '../../assets/logo.png';
 import olhoAberto from '../../assets/olho-aberto.png';
 import olhoFechado from '../../assets/olho-vermelho (1).png'
 

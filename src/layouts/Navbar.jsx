@@ -1,7 +1,7 @@
 // src/layouts/NavBar.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logo from '../assets/logo.png';
+import logo from '../../assets/logo.png';
 
 export default function NavBar({ user }) {
   const [isOpen, setIsOpen] = useState(false);
