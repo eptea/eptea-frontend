@@ -1,6 +1,6 @@
 // src/features/planning/SubjectStudents.jsx
 import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
 import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
@@ -21,6 +21,11 @@ const GET_SUBJECT_DETAILS = gql`
 export default function SubjectStudents() {
   const { classId, subjectId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const teacherIdFromUrl = searchParams.get("teacherId");
+
   const { data, loading, error } = useQuery(GET_SUBJECT_DETAILS, { variables: { classId } });
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl">EPTEA: GERANDO LISTA DE CHAMADA...</div>;
@@ -59,7 +64,7 @@ export default function SubjectStudents() {
                 </div>
                 
                 <button 
-                  onClick={() => navigate(`/students/${s.id}/dossie?subjectId=${subjectId}`)}
+                  onClick={() => navigate(`/students/${s.id}/dossie?subjectId=${subjectId}&teacherId=${teacherIdFromUrl}`)}
                   className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-xs uppercase hover:bg-indigo-600 transition-all shadow-lg relative z-10"
                 >
                   Abrir Dossiê & Plano
