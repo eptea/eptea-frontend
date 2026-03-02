@@ -1,9 +1,9 @@
-// src/features/auth/Login.jsx
 import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import logo from '../../assets/logo.png';
+
+import logo from '../../assets/logo.png'; // <-- Importação da logo
 import olhoAberto from '../../assets/olho-aberto.png';
 import olhoFechado from '../../assets/olho-vermelho (1).png'
 
@@ -21,7 +21,6 @@ const LOGIN_MUTATION = gql`
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' });
-  // Estado para controlar a visibilidade da senha
   const [showPassword, setShowPassword] = useState(false);
   
   const navigate = useNavigate();
@@ -34,7 +33,6 @@ export default function Login() {
       
       if (data.login.success) {
         localStorage.setItem('token', data.login.token);
-        
         if (data.login.mustChangePassword && data.login.userType !== 'management' && data.login.userType !== 'superuser') {
           navigate('/change-password');
         } else {
@@ -49,11 +47,7 @@ export default function Login() {
         });
       }
     } catch (err) {
-      Swal.fire({
-        icon: 'error',
-        title: 'Erro de Conexão',
-        text: 'Não foi possível contatar o servidor.',
-      });
+      Swal.fire({ icon: 'error', title: 'Erro de Conexão', text: 'Não foi possível contatar o servidor.' });
     }
   };
 
@@ -61,9 +55,12 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
       <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200">
         <div className="text-center mb-8">
-          <img src={logo} alt="EPTEA Logo" className="w-12 h-12 object-contain" />
-          <h2 className="text-4xl font-black text-blue-600 tracking-tighter italic">EPTEA</h2>
-          <p className="text-slate-500 mt-2 font-medium">Bem-vindo ao portal educacional</p>
+          {/* LOGO + NOME NO LOGIN */}
+          <div className="flex items-center justify-center gap-3 mb-2">
+            <img src={logo} alt="EPTEA Logo" className="w-12 h-12 object-contain" />
+            <h2 className="text-4xl font-black text-blue-600 tracking-tighter italic">EPTEA</h2>
+          </div>
+          <p className="text-slate-500 font-medium">Bem-vindo ao portal educacional</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -89,13 +86,12 @@ export default function Login() {
                 onChange={e => setForm({...form, password: e.target.value})} 
                 required
               />
-              {/* Botão do Olhinho */}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-xl hover:bg-slate-200 rounded-xl transition-colors text-slate-400"
+                className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center hover:bg-slate-200 rounded-xl transition-colors"
               >
-                <img src={showPassword ? olhoFechado : olhoAberto}/>
+                <img src={showPassword ? olhoFechado : olhoAberto} className="w-6 h-6 object-contain opacity-70" alt="Toggle visibility" />
               </button>
             </div>
           </div>

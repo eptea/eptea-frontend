@@ -1,7 +1,6 @@
-// src/layouts/NavBar.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import logo from '../assets/logo.png';
+import logo from '../assets/logo.png'; // <-- Certifique-se de que o nome do arquivo está correto
 
 export default function NavBar({ user }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,16 +11,18 @@ export default function NavBar({ user }) {
     window.location.href = '/';
   };
 
-  // Lógica segura para iniciais
-  // Se não tiver firstName, usamos a primeira letra do username
   const initialA = user?.firstName ? user.firstName.charAt(0) : user?.username?.charAt(0) || "?";
   const initialB = user?.lastName ? user.lastName.charAt(0) : "";
 
   return (
     <nav className="bg-white border-b px-6 py-3 flex justify-between items-center shadow-sm sticky top-0 z-50">
       <div className="flex items-center gap-4">
-        <Link to="/dashboard" className="text-2xl font-black text-blue-600 tracking-tighter">EPTEA</Link>
-        <img src={logo} alt="Logo EPTEA" className="w-8 h-8 object-contain group-hover:scale-105 transition-transform" />
+        {/* LOGO + NOME */}
+        <Link to="/dashboard" className="flex items-center gap-2 group">
+          <img src={logo} alt="Logo EPTEA" className="w-8 h-8 object-contain group-hover:scale-105 transition-transform" />
+          <span className="text-2xl font-black text-blue-600 tracking-tighter">EPTEA</span>
+        </Link>
+        
         <span className="hidden md:inline bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase">
           {user?.institution?.name || 'Admin'}
         </span>
@@ -39,7 +40,6 @@ export default function NavBar({ user }) {
             <span className="text-[10px] text-slate-500 uppercase font-bold">{user?.userType || 'Equipe'}</span>
           </div>
           
-          {/* Avatar com fallback para iniciais com proteção contra NULL */}
           {user?.profileImage ? (
             <img src={user.profileImage} alt="Profile" className="w-10 h-10 rounded-full object-cover border-2 border-blue-100" />
           ) : (
@@ -49,7 +49,6 @@ export default function NavBar({ user }) {
           )}
         </button>
 
-        {/* Dropdown Menu */}
         {isOpen && (
           <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-slate-100 py-2 z-50">
             <button 
