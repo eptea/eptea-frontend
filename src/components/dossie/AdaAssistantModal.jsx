@@ -5,8 +5,8 @@ import Swal from "sweetalert2";
 
 // --- QUERIES & MUTATIONS ---
 const GET_ADA_HISTORY = gql`
-  query GetAda($studentId: ID!, $subjectId: ID) {
-    adaHistory(studentId: $studentId, subjectId: $subjectId) {
+  query GetAda($studentId: ID!, $subjectId: ID, $teacherId: ID) {
+    adaHistory(studentId: $studentId, subjectId: $subjectId, teacherId: $teacherId) {
       id question response createdAt
     }
   }
@@ -26,7 +26,7 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
   const bottomRef = useRef(null);
 
   const { data, refetch } = useQuery(GET_ADA_HISTORY, {
-    variables: { studentId, subjectId },
+    variables: { studentId, subjectId, teacherId: (teacherId === "null" || !teacherId) ? null : teacherId },
     skip: !isOpen,
   });
 
