@@ -96,12 +96,13 @@ export default function StudentDossie() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentSubjectId = new URLSearchParams(location.search).get("subjectId");
+  const currentTeacherId = searchParams.get("teacherId");
 
   const { data, loading, refetch, error } = useQuery(GET_STUDENT_DOSSIE, {
   variables: {
     id,
     subjectId: currentSubjectId,
-    teacherId: null, // só será usado se backend precisar
+    teacherId: currentTeacherId, // só será usado se backend precisar
   },
   skip: !id || !currentSubjectId,
   fetchPolicy: "network-only",
