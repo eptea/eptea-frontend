@@ -20,28 +20,60 @@ import AdaAssistantModal from "../../components/dossie/AdaAssistantModal";
 
 // --- QUERIES ---
 const GET_STUDENT_DOSSIE = gql`
-  query GetDossie($id: ID!, $subjectId: ID, $teacherId: ID!) {
+  query GetDossie($id: ID!, $subjectId: ID!, $teacherId: ID) {
     me {
-      id username firstName lastName userType profileImage
+      id
+      username
+      firstName
+      lastName
+      userType
+      profileImage
       institution { name }
     }
+
     userById(id: $id) {
-      id firstName lastName username profileImage
+      id
+      firstName
+      lastName
+      username
+      profileImage
       classGroup { id name }
+
       documents {
-        id title fileUrl createdAt category
+        id
+        title
+        fileUrl
+        createdAt
+        category
         subject { id name }
         uploader { id firstName userType }
       }
+
       teaProfile {
-        disabilityDescription educationalHistory pastAdaptations
-        institutionalHistory challengesAndTriggers strengthsAndInterests
-        communicationProfile healthAndNutrition crisisIntervention
-        pedagogicalGuidelines certificationType
+        disabilityDescription
+        educationalHistory
+        pastAdaptations
+        institutionalHistory
+        challengesAndTriggers
+        strengthsAndInterests
+        communicationProfile
+        healthAndNutrition
+        crisisIntervention
+        pedagogicalGuidelines
+        certificationType
       }
     }
-    subjectAccessibilityPlan(studentId: $id, subjectId: $subjectId, teacherId: $teacherId) {
-      id programmaticContent objectives methodology evaluation
+
+    subjectAccessibilityPlan(
+      studentId: $id
+      subjectId: $subjectId
+      teacherId: $teacherId
+    ) {
+      id
+      programmaticContent
+      objectives
+      methodology
+      evaluation
     }
   }
 `;
@@ -66,9 +98,14 @@ export default function StudentDossie() {
   const currentSubjectId = new URLSearchParams(location.search).get("subjectId");
 
   const { data, loading, refetch, error } = useQuery(GET_STUDENT_DOSSIE, {
-    variables: { id, subjectId: currentSubjectId, teacherId: user?.id },
-    fetchPolicy: "network-only",
-  });
+  variables: {
+    id,
+    subjectId: currentSubjectId,
+    teacherId: null, // só será usado se backend precisar
+  },
+  skip: !id || !currentSubjectId,
+  fetchPolicy: "network-only",
+});
 
   const [updateTEA] = useMutation(UPDATE_TEA);
   const [updateSubjectPlan] = useMutation(UPDATE_SUBJECT_PLAN);
