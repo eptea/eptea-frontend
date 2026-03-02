@@ -8,7 +8,7 @@ import Sidebar from '../../layouts/Sidebar';
 
 const GET_CLASS_DATA = gql`
   query GetClass($id: ID!) {
-    me { id userType institution { id name } }
+    me { id username firstName lastName userType profileImage institution { id name } }
     classGroupById(id: $id) {
       id name
       # Buscamos as disciplinas vinculadas a esta turma
