@@ -1,6 +1,7 @@
 // src/layouts/NavBar.jsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import logo from '../assets/logo.png';
 
 export default function NavBar({ user }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,6 +21,7 @@ export default function NavBar({ user }) {
     <nav className="bg-white border-b px-6 py-3 flex justify-between items-center shadow-sm sticky top-0 z-50">
       <div className="flex items-center gap-4">
         <Link to="/dashboard" className="text-2xl font-black text-blue-600 tracking-tighter">EPTEA</Link>
+        <img src={logo} alt="Logo EPTEA" className="w-8 h-8 object-contain group-hover:scale-105 transition-transform" />
         <span className="hidden md:inline bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase">
           {user?.institution?.name || 'Admin'}
         </span>

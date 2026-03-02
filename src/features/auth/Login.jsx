@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useMutation, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-
+import logo from '../assets/logo.png';
 import olhoAberto from '../../assets/olho-aberto.png';
 import olhoFechado from '../../assets/olho-vermelho (1).png'
 
@@ -61,6 +61,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
       <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-slate-200">
         <div className="text-center mb-8">
+          <img src={logo} alt="EPTEA Logo" className="w-12 h-12 object-contain" />
           <h2 className="text-4xl font-black text-blue-600 tracking-tighter italic">EPTEA</h2>
           <p className="text-slate-500 mt-2 font-medium">Bem-vindo ao portal educacional</p>
         </div>
