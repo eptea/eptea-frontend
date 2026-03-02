@@ -95,6 +95,8 @@ export default function StudentDossie() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
   const currentSubjectId = new URLSearchParams(location.search).get("subjectId");
   const currentTeacherId = searchParams.get("teacherId");
 
