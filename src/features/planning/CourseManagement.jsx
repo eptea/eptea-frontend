@@ -1,9 +1,9 @@
-import React, { useState } from "react";
-import { useQuery, useMutation, gql } from "@apollo/client";
-import { useNavigate } from "react-router-dom";
-import Swal from "sweetalert2";
-import NavBar from "../../layouts/Navbar";
-import Sidebar from "../../layouts/Sidebar";
+import React, { useState } from 'react';
+import { useQuery, useMutation, gql } from '@apollo/client';
+import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import NavBar from '../../layouts/Navbar';
+import Sidebar from '../../layouts/Sidebar';
 
 const GET_COURSES = gql`
   query GetCourses {
@@ -14,10 +14,7 @@ const GET_COURSES = gql`
       lastName
       userType
       profileImage
-      institution {
-        name
-        id
-      }
+      institution { name id }
     }
     myCourses {
       id
@@ -26,13 +23,11 @@ const GET_COURSES = gql`
     }
   }
 `;
+
 const CREATE_COURSE = gql`
   mutation CreateCourse($name: String!) {
     createCourse(name: $name) {
-      course {
-        id
-        name
-      }
+      course { id name }
     }
   }
 `;
@@ -47,15 +42,14 @@ const TOGGLE_COURSE = gql`
 
 export default function CourseManagement() {
   const navigate = useNavigate();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [courseName, setCourseName] = useState("");
+  const [showInactive, setShowInactive] = useState(false);
+  const [courseName, setCourseName] = useState('');
 
   const { data, loading, refetch, error } = useQuery(GET_COURSES);
   const [createCourse] = useMutation(CREATE_COURSE);
   const [toggleCourse] = useMutation(TOGGLE_COURSE);
-
-  const activeCourses = data?.myCourses.filter((c) => c.isActive);
-  const inactiveCourses = data?.myCourses.filter((c) => !c.isActive);
 
   if (loading)
     return (
@@ -63,6 +57,7 @@ export default function CourseManagement() {
         EPTEA: SINCRONIZANDO CURSOS...
       </div>
     );
+
   if (error)
     return (
       <p className="p-20 text-center text-red-500 font-bold">
@@ -71,18 +66,40 @@ export default function CourseManagement() {
     );
 
   const user = data?.me;
-  const isManagement = ["management", "aee"].includes(user?.userType);
+  const isManagement = ['management', 'aee'].includes(user?.userType);
+
+  const activeCourses = data?.myCourses.filter(c => c.isActive);
+  const inactiveCourses = data?.myCourses.filter(c => !c.isActive);
 
   const handleSave = async () => {
     if (!courseName.trim()) return;
+
     try {
       await createCourse({ variables: { name: courseName } });
-      Swal.fire("Sucesso!", "Curso cadastrado.", "success");
-      setCourseName("");
+      Swal.fire('Sucesso!', 'Curso cadastrado.', 'success');
+      setCourseName('');
       setIsModalOpen(false);
       refetch();
     } catch (e) {
-      Swal.fire("Erro", e.message, "error");
+      Swal.fire('Erro', e.message, 'error');
+    }
+  };
+
+  const handleToggle = async (courseId, status) => {
+    try {
+      await toggleCourse({
+        variables: { courseId, isActive: status }
+      });
+
+      Swal.fire(
+        status ? 'Curso reativado!' : 'Curso inativado!',
+        '',
+        'success'
+      );
+
+      refetch();
+    } catch (e) {
+      Swal.fire('Erro', e.message, 'error');
     }
   };
 
@@ -91,45 +108,48 @@ export default function CourseManagement() {
       <NavBar user={user} />
       <div className="flex">
         <Sidebar user={user} />
+
         <main className="flex-1 p-6 md:p-10 max-w-7xl">
+          
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
             <h2 className="text-4xl font-black text-slate-800 italic tracking-tight">
               Cursos Ofertados
             </h2>
+
             {isManagement && (
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-indigo-600 text-white px-8 py-4 rounded-[1.8rem] font-bold shadow-lg hover:bg-indigo-700 transition-all flex items-center gap-2"
-              >
-                <span>📚</span> Novo Curso
-              </button>
-            )}
-            {isManagement && inactiveCourses.length > 0 && (
-              <button
-                onClick={() => setShowInactive(true)}
-                className="bg-slate-200 px-6 py-3 rounded-2xl font-bold"
-              >
-                Cursos Inativos
-              </button>
+              <div className="flex gap-3">
+                {inactiveCourses.length > 0 && (
+                  <button
+                    onClick={() => setShowInactive(true)}
+                    className="bg-slate-200 text-slate-700 px-6 py-4 rounded-[1.8rem] font-bold"
+                  >
+                    Cursos Inativos
+                  </button>
+                )}
+
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="bg-indigo-600 text-white px-8 py-4 rounded-[1.8rem] font-bold shadow-lg hover:bg-indigo-700 transition-all flex items-center gap-2"
+                >
+                  <span>📚</span> Novo Curso
+                </button>
+              </div>
             )}
           </div>
 
+          {/* CURSOS ATIVOS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {data?.myCourses.map((course) => (
+            {activeCourses.map(course => (
               <div
                 key={course.id}
-                className="relative bg-white p-10 rounded-[3rem] ..."
+                onClick={() => navigate(`/courses/${course.id}/classes`)}
+                className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-2 cursor-pointer transition-all duration-300 group relative"
               >
                 {isManagement && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toggleCourse({
-                        variables: { courseId: course.id, isActive: false },
-                      }).then(() => {
-                        Swal.fire("Curso inativado", "", "success");
-                        refetch();
-                      });
+                      handleToggle(course.id, false);
                     }}
                     className="absolute top-6 right-6 text-red-500 text-xs font-bold"
                   >
@@ -137,63 +157,77 @@ export default function CourseManagement() {
                   </button>
                 )}
 
-                <h3 className="text-2xl font-black">{course.name}</h3>
+                <div className="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform shadow-inner text-indigo-600">
+                  🎓
+                </div>
+
+                <h3 className="text-2xl font-black text-slate-800 mb-2">
+                  {course.name}
+                </h3>
+
+                <div className="flex items-center justify-between mt-6">
+                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Ver Unidades
+                  </p>
+                  <span className="w-8 h-8 rounded-full bg-slate-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                    →
+                  </span>
+                </div>
               </div>
             ))}
           </div>
 
+          {/* MODAL NOVO CURSO */}
           {isModalOpen && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
-              <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-in zoom-in duration-200">
+              <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl">
                 <h3 className="text-2xl font-black mb-6 text-slate-800 italic">
                   Cadastrar Curso
                 </h3>
-                <div className="space-y-6">
-                  <input
-                    className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner"
-                    placeholder="Nome do Curso (Ex: Informática)"
-                    value={courseName}
-                    onChange={(e) => setCourseName(e.target.value)}
-                  />
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleSave}
-                      className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-100"
-                    >
-                      Confirmar
-                    </button>
-                    <button
-                      onClick={() => setIsModalOpen(false)}
-                      className="px-6 py-4 bg-slate-100 text-slate-400 rounded-2xl font-bold"
-                    >
-                      Voltar
-                    </button>
-                  </div>
+
+                <input
+                  className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner mb-6"
+                  placeholder="Nome do Curso"
+                  value={courseName}
+                  onChange={e => setCourseName(e.target.value)}
+                />
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSave}
+                    className="flex-1 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg"
+                  >
+                    Confirmar
+                  </button>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-6 py-4 bg-slate-100 text-slate-400 rounded-2xl font-bold"
+                  >
+                    Voltar
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
+          {/* MODAL CURSOS INATIVOS */}
           {showInactive && (
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
               <div className="bg-white p-10 rounded-3xl w-full max-w-lg">
-                <h3 className="text-2xl font-black mb-6">Cursos Inativos</h3>
+                <h3 className="text-2xl font-black mb-6">
+                  Cursos Inativos
+                </h3>
 
-                {inactiveCourses.map((course) => (
+                {inactiveCourses.map(course => (
                   <div
                     key={course.id}
                     className="flex justify-between items-center mb-4"
                   >
-                    <span className="font-bold">{course.name}</span>
+                    <span className="font-bold">
+                      {course.name}
+                    </span>
                     <button
-                      onClick={() => {
-                        toggleCourse({
-                          variables: { courseId: course.id, isActive: true },
-                        }).then(() => {
-                          Swal.fire("Curso reativado", "", "success");
-                          refetch();
-                        });
-                      }}
+                      onClick={() => handleToggle(course.id, true)}
                       className="bg-green-500 text-white px-4 py-2 rounded-xl text-sm"
                     >
                       Ativar
@@ -210,6 +244,7 @@ export default function CourseManagement() {
               </div>
             </div>
           )}
+
         </main>
       </div>
     </div>
