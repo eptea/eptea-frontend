@@ -240,7 +240,7 @@ export default function StudentDossie() {
                       color="slate"
                       studentId={id}
                       subjectId={currentSubjectId}
-                      category="MATERIAL"
+                      category="OTHER"
                       refetch={refetch}
                       canUpload={user?.userType === "teacher" || user?.userType === "aee"}
                     />
