@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, gql } from "@apollo/client";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from 'remark-gfm'; // Necessário para formatar as tabelas de metas d
+import remarkGfm from 'remark-gfm';
 import Swal from "sweetalert2";
 
 // Importação da logo do IF conforme sua estrutura de assets
@@ -11,13 +11,11 @@ import IF_LOGO from "../../assets/if.png";
 // --- QUERIES & MUTATIONS ---
 const GET_ADA_DATA = gql`
   query GetAda($sid: ID!, $subid: ID, $tid: ID) {
-    # Histórico do chat
     adaHistory(studentId: $sid, subjectId: $subid, teacherId: $tid) {
       id question response createdAt
     }
-    # Dados do Aluno e Dossiê (AEE) para o PDF
     userById(id: $sid) {
-      id firstName lastName username
+      id firstName lastName username profileImage # Adicionado profileImage
       classGroup { name course { name } }
       teaProfile { 
         disabilityDescription
@@ -26,7 +24,6 @@ const GET_ADA_DATA = gql`
         pedagogicalGuidelines
       }
     }
-    # Dados do Plano de Acessibilidade (Professor) para o PDF
     subjectAccessibilityPlan(studentId: $sid, subjectId: $subid, teacherId: $tid) {
       programmaticContent
       objectives
@@ -58,7 +55,6 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
 
   const [askAda, { loading: thinking }] = useMutation(ASK_ADA);
 
-  // Scroll automático para o fim da conversa
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [data, thinking]);
@@ -69,12 +65,7 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
     setQuestion("");
     try {
       await askAda({ 
-        variables: { 
-          sid: studentId, 
-          subid: subjectId, 
-          tid: teacherId, 
-          q: currentQ 
-        } 
+        variables: { sid: studentId, subid: subjectId, tid: teacherId, q: currentQ } 
       });
       refetch();
     } catch (e) {
@@ -82,7 +73,7 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
     }
   };
 
-  // --- LÓGICA DE IMPRESSÃO ESTILIZADA (LAYOUT ANEXO) ---
+  // --- LÓGICA DE IMPRESSÃO ESTILIZADA (LAYOUT ANEXO COM FOTO) ---
   const handlePrint = (aiResponseHTML) => {
     const s = data?.userById;
     const p = s?.teaProfile;
@@ -95,23 +86,18 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
           <title>PEI - ${s?.firstName} ${s?.lastName}</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; color: #000; line-height: 1.4; }
-            /* Cabeçalho Verde igual ao anexo */
             .header-pei { background-color: #92d050; border: 1px solid #000; padding: 12px; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 0; }
-            /* Tabelas de Identificação */
             .table-pei { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
             .table-pei td { border: 1px solid #000; padding: 8px; font-size: 13px; vertical-align: top; }
             .label { font-weight: bold; display: block; margin-bottom: 2px; }
-            /* Títulos de Seção Cinza */
             .section-title { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; padding: 6px; border: 1px solid #000; margin-top: 15px; font-size: 13px; }
             .content-box { border: 1px solid #000; padding: 10px; min-height: 40px; font-size: 12px; margin-top: -1px; text-align: justify; }
-            /* Logo e Identificação Institucional */
             .if-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid #00913f; padding-bottom: 10px; }
             .logo { height: 70px; }
-            /* Estilo das tabelas geradas pela IA */
+            .student-photo { width: 100px; height: 120px; object-fit: cover; border: 1px solid #000; display: block; margin: 0 auto; }
             .ai-content table { width: 100%; border-collapse: collapse; margin-top: 10px; }
             .ai-content th { background-color: #92d050; border: 1px solid #000; padding: 6px; font-size: 11px; }
             .ai-content td { border: 1px solid #000; padding: 6px; font-size: 11px; }
-            @media print { .no-print { display: none; } }
           </style>
         </head>
         <body>
@@ -125,10 +111,18 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
           <div class="header-pei">IDENTIFICAÇÃO DO (A) DISCENTE</div>
           <table class="table-pei">
             <tr>
-              <td colspan="2"><span class="label">Nome completo:</span> ${s?.firstName} ${s?.lastName}</td>
+              <td style="width: 75%;"><span class="label">Nome completo:</span> ${s?.firstName} ${s?.lastName}</td>
+              <td rowspan="3" style="width: 25%; text-align: center; vertical-align: middle;">
+                ${s?.profileImage 
+                  ? `<img src="${s.profileImage}" class="student-photo">` 
+                  : `<div style="font-size: 10px; color: #666; border: 1px dashed #ccc; height: 120px; display: flex; items-center; justify-content: center; flex-direction: column;">S/ FOTO</div>`
+                }
+              </td>
             </tr>
             <tr>
-              <td width="50%"><span class="label">Matrícula:</span> ${s?.username}</td>
+              <td><span class="label">Matrícula:</span> ${s?.username}</td>
+            </tr>
+            <tr>
               <td><span class="label">Curso:</span> ${s?.classGroup?.course?.name || 'Não informado'}</td>
             </tr>
           </table>
@@ -161,23 +155,19 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
              <div style="border-top: 1px solid #000; width: 40%; text-align: center; padding-top: 5px;">Assinatura AEE / NAPNE</div>
              <div style="border-top: 1px solid #000; width: 40%; text-align: center; padding-top: 5px;">Assinatura Docente</div>
           </div>
-          <div style="text-align: center; font-size: 8px; color: #666; margin-top: 30px;">
-            Documento gerado pela Assistente Ada - Plataforma EPTEA
-          </div>
         </body>
       </html>
     `);
     printWindow.document.close();
-    setTimeout(() => printWindow.print(), 500);
+    // Pequeno delay para garantir que a imagem do aluno carregue antes da janela de impressão
+    setTimeout(() => printWindow.print(), 700);
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[110] flex items-center justify-end p-4 md:p-10 bg-slate-900/20 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-lg h-[85vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in slide-in-from-right duration-300">
-        
-        {/* HEADER */ }
+      <div className="bg-white w-full max-w-lg h-[85vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#00913f]">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shadow-lg">
@@ -191,18 +181,14 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
           <button onClick={onClose} className="w-10 h-10 rounded-full hover:bg-black/10 text-white flex items-center justify-center font-bold">✕</button>
         </div>
 
-        {/* CHAT AREA */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 custom-scrollbar">
           {data?.adaHistory.map((item) => (
             <div key={item.id} className="space-y-4">
-              {/* Pergunta */}
               <div className="flex justify-end">
                 <div className="bg-[#00913f] text-white p-4 rounded-2xl rounded-br-none max-w-[85%] text-sm shadow-md">
                   {item.question}
                 </div>
               </div>
-              
-              {/* Resposta da Ada */}
               <div className="flex justify-start">
                 <div className="bg-white border border-slate-200 text-slate-700 p-5 rounded-2xl rounded-tl-none shadow-sm w-full max-w-[95%]">
                   <div className="text-[9px] font-bold uppercase mb-2 text-[#00913f]">Ada</div>
@@ -221,8 +207,6 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
                       {item.response}
                     </ReactMarkdown>
                   </div>
-                  
-                  {/* Botão de Exportar para PDF Estilizado */}
                   {(item.response.length > 200 || item.response.toLowerCase().includes('pei')) && (
                     <button 
                       onClick={() => handlePrint(document.getElementById(`ada-response-${item.id}`).innerHTML)}
@@ -238,7 +222,6 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
           <div ref={bottomRef} />
         </div>
 
-        {/* INPUT AREA */}
         <div className="p-5 bg-white border-t border-slate-100">
           <div className="relative">
             <textarea
