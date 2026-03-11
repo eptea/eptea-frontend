@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, gql } from "@apollo/client";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from 'remark-gfm'; // Necessário para formatar as tabelas de metas
+import remarkGfm from 'remark-gfm'; // Necessário para formatar as tabelas de metas d
 import Swal from "sweetalert2";
 
 // Importação da logo do IF conforme sua estrutura de assets
