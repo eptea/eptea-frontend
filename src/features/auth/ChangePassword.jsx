@@ -4,6 +4,9 @@ import { useMutation, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
+import olhoAberto from '../../assets/olho-aberto.png';
+import olhoFechado from '../../assets/olho-vermelho (1).png';
+
 const CHANGE_PASSWORD_MUTATION = gql`
   mutation ChangePassword($old: String!, $new: String!) {
     changePassword(oldPassword: $old, newPassword: $new) {
@@ -14,14 +17,19 @@ const CHANGE_PASSWORD_MUTATION = gql`
 `;
 
 export default function ChangePassword() {
+
   const [form, setForm] = useState({ old: '', new: '', confirm: '' });
+
+  const [showOld, setShowOld] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const [changePassword, { loading }] = useMutation(CHANGE_PASSWORD_MUTATION);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validação de senhas iguais no Front-end
+
     if (form.new !== form.confirm) {
       Swal.fire({
         icon: 'warning',
@@ -33,11 +41,12 @@ export default function ChangePassword() {
     }
 
     try {
-      const { data } = await changePassword({ 
-        variables: { old: form.old, new: form.new } 
+      const { data } = await changePassword({
+        variables: { old: form.old, new: form.new }
       });
 
       if (data.changePassword.success) {
+
         Swal.fire({
           icon: 'success',
           title: 'Senha Atualizada!',
@@ -45,82 +54,167 @@ export default function ChangePassword() {
           showConfirmButton: false,
           timer: 2000
         });
-        
+
         setTimeout(() => navigate('/complete-profile'), 2000);
+
       } else {
+
         Swal.fire({
           icon: 'error',
           title: 'Erro na atualização',
           text: data.changePassword.message,
           confirmButtonColor: '#ef4444'
         });
+
       }
+
     } catch (err) {
+
       Swal.fire({
         icon: 'error',
         title: 'Falha no servidor',
         text: err.message
       });
+
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+
       <div className="bg-white p-10 rounded-3xl shadow-2xl w-full max-w-md border border-slate-100">
+
         <div className="text-center mb-8">
+
           <div className="bg-blue-100 text-blue-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
+
           <h2 className="text-2xl font-bold text-slate-800">Primeiro Acesso</h2>
-          <p className="text-slate-500 mt-2">Por segurança, atualize sua senha padrão para continuar.</p>
+
+          <p className="text-slate-500 mt-2">
+            Por segurança, atualize sua senha padrão para continuar.
+          </p>
+
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
+
+          {/* SENHA ATUAL */}
+
           <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-1">Senha Atual (Sua matrícula)</label>
-            <input 
-              type="password" 
-              className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-              placeholder="Digite a senha atual" 
-              onChange={e => setForm({...form, old: e.target.value})}
-              required 
-            />
+            <label className="block text-sm font-semibold text-slate-700 mb-1">
+              Senha Atual (Sua matrícula)
+            </label>
+
+            <div className="relative">
+
+              <input
+                type={showOld ? "text" : "password"}
+                className="w-full px-4 py-3 pr-14 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                placeholder="Digite a senha atual"
+                value={form.old}
+                onChange={e => setForm({ ...form, old: e.target.value })}
+                required
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowOld(!showOld)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center hover:bg-slate-200 rounded-xl transition-colors"
+              >
+                <img
+                  src={showOld ? olhoFechado : olhoAberto}
+                  className="w-6 h-6 object-contain opacity-70"
+                  alt="Toggle visibility"
+                />
+              </button>
+
+            </div>
           </div>
 
           <div className="border-t border-slate-100 pt-4 space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Nova Senha</label>
-              <input 
-                type="password" 
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                placeholder="Mínimo 8 caracteres" 
-                onChange={e => setForm({...form, new: e.target.value})}
-                required 
-              />
-            </div>
+
+            {/* NOVA SENHA */}
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Confirmar Nova Senha</label>
-              <input 
-                type="password" 
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                placeholder="Repita a nova senha" 
-                onChange={e => setForm({...form, confirm: e.target.value})}
-                required 
-              />
+              <label className="block text-sm font-semibold text-slate-700 mb-1">
+                Nova Senha
+              </label>
+
+              <div className="relative">
+
+                <input
+                  type={showNew ? "text" : "password"}
+                  className="w-full px-4 py-3 pr-14 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  placeholder="Mínimo 8 caracteres"
+                  value={form.new}
+                  onChange={e => setForm({ ...form, new: e.target.value })}
+                  required
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowNew(!showNew)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center hover:bg-slate-200 rounded-xl transition-colors"
+                >
+                  <img
+                    src={showNew ? olhoFechado : olhoAberto}
+                    className="w-6 h-6 object-contain opacity-70"
+                    alt="Toggle visibility"
+                  />
+                </button>
+
+              </div>
             </div>
+
+            {/* CONFIRMAR SENHA */}
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">
+                Confirmar Nova Senha
+              </label>
+
+              <div className="relative">
+
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  className="w-full px-4 py-3 pr-14 rounded-xl border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  placeholder="Repita a nova senha"
+                  value={form.confirm}
+                  onChange={e => setForm({ ...form, confirm: e.target.value })}
+                  required
+                />
+
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center hover:bg-slate-200 rounded-xl transition-colors"
+                >
+                  <img
+                    src={showConfirm ? olhoFechado : olhoAberto}
+                    className="w-6 h-6 object-contain opacity-70"
+                    alt="Toggle visibility"
+                  />
+                </button>
+
+              </div>
+            </div>
+
           </div>
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             disabled={loading}
             className="w-full py-4 mt-4 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 active:scale-[0.98] transition-all shadow-lg shadow-blue-100 disabled:bg-blue-300"
           >
             {loading ? 'Processando...' : 'Salvar Nova Senha'}
           </button>
+
         </form>
+
       </div>
     </div>
   );

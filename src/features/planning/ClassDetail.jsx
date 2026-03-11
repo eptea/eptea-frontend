@@ -187,7 +187,7 @@ export default function ClassDetail() {
                 onClick={() => setIsModalOpen(true)}
                 className="bg-indigo-600 text-white px-8 py-4 rounded-[1.8rem] font-black shadow-lg hover:bg-indigo-700 transition-all flex items-center gap-2"
               >
-                <span>➕</span> Atuar nesta Turma
+                <span>➕</span> Crie Sua Disciplina
               </button>
             )}
           </div>
