@@ -1,24 +1,41 @@
+// src/features/planning/AdaAssistantModal.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { useMutation, useQuery, gql } from "@apollo/client";
 import ReactMarkdown from "react-markdown";
-import remarkGfm from 'remark-gfm';
+import remarkGfm from 'remark-gfm'; // Necessário para formatar as tabelas de metas
 import Swal from "sweetalert2";
 
-import IF_LOGO from "../../assets/if.png"
-
+// Importação da logo do IF conforme sua estrutura de assets
+import IF_LOGO from "../../assets/if.png";
 
 // --- QUERIES & MUTATIONS ---
 const GET_ADA_DATA = gql`
   query GetAda($sid: ID!, $subid: ID, $tid: ID) {
+    # Histórico do chat
     adaHistory(studentId: $sid, subjectId: $subid, teacherId: $tid) {
       id question response createdAt
     }
+    # Dados do Aluno e Dossiê (AEE) para o PDF
     userById(id: $sid) {
-      firstName lastName username
+      id firstName lastName username
       classGroup { name course { name } }
+      teaProfile { 
+        disabilityDescription
+        challengesAndTriggers
+        strengthsAndInterests
+        pedagogicalGuidelines
+      }
+    }
+    # Dados do Plano de Acessibilidade (Professor) para o PDF
+    subjectAccessibilityPlan(studentId: $sid, subjectId: $subid, teacherId: $tid) {
+      programmaticContent
+      objectives
+      methodology
+      evaluation
     }
   }
 `;
+
 const ASK_ADA = gql`
   mutation AskAda($sid: ID!, $subid: ID, $tid: ID, $q: String!) {
     askAda(studentId: $sid, subjectId: $subid, teacherId: $tid, question: $q) {
@@ -36,37 +53,117 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
   const { data, refetch } = useQuery(GET_ADA_DATA, {
     variables: { sid: studentId, subid: subjectId, tid: activeTeacherId },
     skip: !isOpen,
+    fetchPolicy: "network-only",
   });
 
   const [askAda, { loading: thinking }] = useMutation(ASK_ADA);
 
-  const handlePrint = (contentHTML) => {
-    const student = data?.userById;
+  // Scroll automático para o fim da conversa
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [data, thinking]);
+
+  const handleAsk = async () => {
+    if (!question.trim() || thinking) return;
+    const currentQ = question;
+    setQuestion("");
+    try {
+      await askAda({ 
+        variables: { 
+          sid: studentId, 
+          subid: subjectId, 
+          tid: teacherId, 
+          q: currentQ 
+        } 
+      });
+      refetch();
+    } catch (e) {
+      Swal.fire("Erro na Ada", e.message, "error");
+    }
+  };
+
+  // --- LÓGICA DE IMPRESSÃO ESTILIZADA (LAYOUT ANEXO) ---
+  const handlePrint = (aiResponseHTML) => {
+    const s = data?.userById;
+    const p = s?.teaProfile;
+    const plan = data?.subjectAccessibilityPlan;
+
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
       <html>
         <head>
+          <title>PEI - ${s?.firstName} ${s?.lastName}</title>
           <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-            .pei-header { background: #92d050; color: #000; padding: 15px; text-align: center; font-weight: 900; border: 2px solid #000; margin-bottom: 0; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            td, th { border: 1px solid #000; padding: 10px; font-size: 12px; }
-            .section-title { background: #e2e8f0; font-weight: bold; text-transform: uppercase; border: 1px solid #000; padding: 8px; margin-top: 15px; }
-            .logo-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #00913f; margin-bottom: 20px; padding-bottom: 10px; }
-            a { color: #00913f; font-weight: bold; }
+            body { font-family: Arial, sans-serif; padding: 20px; color: #000; line-height: 1.4; }
+            /* Cabeçalho Verde igual ao anexo */
+            .header-pei { background-color: #92d050; border: 1px solid #000; padding: 12px; text-align: center; font-weight: bold; font-size: 18px; margin-bottom: 0; }
+            /* Tabelas de Identificação */
+            .table-pei { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            .table-pei td { border: 1px solid #000; padding: 8px; font-size: 13px; vertical-align: top; }
+            .label { font-weight: bold; display: block; margin-bottom: 2px; }
+            /* Títulos de Seção Cinza */
+            .section-title { background-color: #f2f2f2; font-weight: bold; text-transform: uppercase; padding: 6px; border: 1px solid #000; margin-top: 15px; font-size: 13px; }
+            .content-box { border: 1px solid #000; padding: 10px; min-height: 40px; font-size: 12px; margin-top: -1px; text-align: justify; }
+            /* Logo e Identificação Institucional */
+            .if-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; border-bottom: 2px solid #00913f; padding-bottom: 10px; }
+            .logo { height: 70px; }
+            /* Estilo das tabelas geradas pela IA */
+            .ai-content table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            .ai-content th { background-color: #92d050; border: 1px solid #000; padding: 6px; font-size: 11px; }
+            .ai-content td { border: 1px solid #000; padding: 6px; font-size: 11px; }
+            @media print { .no-print { display: none; } }
           </style>
         </head>
         <body>
-          <div class="logo-header">
-            <img src="${IF_LOGO}" style="width: 140px;">
-            <div style="text-align: right; font-size: 9px;">INSTITUTO FEDERAL BAIANO<br>PLANO DE ENSINO INDIVIDUALIZADO (PEI) </div>
+          <div class="if-header">
+            <img src="${IF_LOGO}" class="logo">
+            <div style="text-align: right; font-size: 10px; font-weight: bold;">
+              INSTITUTO FEDERAL BAIANO<br>PLANO DE ENSINO INDIVIDUALIZADO (PEI)
+            </div>
           </div>
-          <div class="pei-header">IDENTIFICAÇÃO DO (A) DISCENTE </div>
-          <table>
-            <tr><td colspan="2"><b>Nome:</b> ${student?.firstName} ${student?.lastName} [cite: 3]</td></tr>
-            <tr><td><b>Matrícula:</b> ${student?.username} [cite: 5]</td><td><b>Curso:</b> ${student?.classGroup?.course?.name} [cite: 7]</td></tr>
+
+          <div class="header-pei">IDENTIFICAÇÃO DO (A) DISCENTE</div>
+          <table class="table-pei">
+            <tr>
+              <td colspan="2"><span class="label">Nome completo:</span> ${s?.firstName} ${s?.lastName}</td>
+            </tr>
+            <tr>
+              <td width="50%"><span class="label">Matrícula:</span> ${s?.username}</td>
+              <td><span class="label">Curso:</span> ${s?.classGroup?.course?.name || 'Não informado'}</td>
+            </tr>
           </table>
-          <div class="content">${contentHTML}</div>
+
+          <div class="section-title">PARTE I - CARACTERIZAÇÃO DO DISCENTE (AEE)</div>
+          <div class="content-box">
+            <span class="label">Descrição da Deficiência:</span> ${p?.disabilityDescription || 'Sem registros no dossiê.'}
+          </div>
+          <div class="content-box">
+             <span class="label">Gatilhos e Dificuldades:</span> ${p?.challengesAndTriggers || 'Sem registros no dossiê.'}
+          </div>
+          <div class="content-box">
+             <span class="label">Habilidades e Hiperfoco:</span> ${p?.strengthsAndInterests || 'Sem registros no dossiê.'}
+          </div>
+
+          <div class="section-title">PARTE II - PLANO DE ACESSIBILIDADE (PROFESSOR)</div>
+          <div class="content-box">
+            <span class="label">Conteúdos Programáticos:</span> ${plan?.programmaticContent || 'Pendente de preenchimento.'}
+          </div>
+          <div class="content-box">
+            <span class="label">Metodologia Sugerida:</span> ${plan?.methodology || 'Pendente de preenchimento.'}
+          </div>
+
+          <div class="ai-content">
+            <div class="section-title">METAS, ESTRATÉGIAS E AVALIAÇÃO (ADAPTAÇÃO CURRICULAR)</div>
+            ${aiResponseHTML}
+          </div>
+          
+          <div style="margin-top: 50px; display: flex; justify-content: space-between; font-size: 10px;">
+             <div style="border-top: 1px solid #000; width: 40%; text-align: center; padding-top: 5px;">Assinatura AEE / NAPNE</div>
+             <div style="border-top: 1px solid #000; width: 40%; text-align: center; padding-top: 5px;">Assinatura Docente</div>
+          </div>
+          <div style="text-align: center; font-size: 8px; color: #666; margin-top: 30px;">
+            Documento gerado pela Assistente Ada - Plataforma EPTEA
+          </div>
         </body>
       </html>
     `);
@@ -77,38 +174,63 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-end p-4 md:p-10 bg-slate-900/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-lg h-[85vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200">
+    <div className="fixed inset-0 z-[110] flex items-center justify-end p-4 md:p-10 bg-slate-900/20 backdrop-blur-sm">
+      <div className="bg-white w-full max-w-lg h-[85vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in slide-in-from-right duration-300">
         
-        <div className="p-6 flex justify-between items-center bg-[#00913f] text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-xl">✨</div>
-            <h3 className="font-black text-sm uppercase tracking-tighter">Ada Assistente</h3>
+        {/* HEADER */}
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#00913f]">
+          <div className="flex items-center gap-4">
+            <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shadow-lg">
+              <span className="animate-pulse text-white">✨</span>
+            </div>
+            <div>
+              <h3 className="font-black text-white">Assistente Ada</h3>
+              <p className="text-[9px] text-white/70 font-black uppercase tracking-widest">Inclusão Inteligente IF Baiano</p>
+            </div>
           </div>
-          <button onClick={onClose} className="font-bold text-xl">✕</button>
+          <button onClick={onClose} className="w-10 h-10 rounded-full hover:bg-black/10 text-white flex items-center justify-center font-bold">✕</button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/50">
+        {/* CHAT AREA */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-slate-50/30 custom-scrollbar">
           {data?.adaHistory.map((item) => (
             <div key={item.id} className="space-y-4">
+              {/* Pergunta */}
               <div className="flex justify-end">
-                <div className="bg-[#00913f] text-white p-4 rounded-2xl rounded-br-none text-xs shadow-md">{item.question}</div>
+                <div className="bg-[#00913f] text-white p-4 rounded-2xl rounded-br-none max-w-[85%] text-sm shadow-md">
+                  {item.question}
+                </div>
               </div>
+              
+              {/* Resposta da Ada */}
               <div className="flex justify-start">
-                <div className="bg-white border border-slate-200 p-5 rounded-2xl rounded-tl-none shadow-sm w-full">
-                  <div id={`res-${item.id}`} className="prose prose-sm max-w-none">
+                <div className="bg-white border border-slate-200 text-slate-700 p-5 rounded-2xl rounded-tl-none shadow-sm w-full max-w-[95%]">
+                  <div className="text-[9px] font-bold uppercase mb-2 text-[#00913f]">Ada</div>
+                  <div id={`ada-response-${item.id}`} className="text-sm prose prose-slate max-w-none prose-table:border prose-table:border-slate-200">
                     <ReactMarkdown 
-                      remarkPlugins={[remarkGfm]} 
+                      remarkPlugins={[remarkGfm]}
                       components={{
-                        h3: ({node, ...props}) => <div className="section-title" {...props} />,
-                        a: ({node, ...props}) => <a className="text-[#00913f] underline font-black" target="_blank" {...props} />,
-                        table: ({node, ...props}) => <table className="w-full border-collapse" {...props} />,
+                        h3: ({node, ...props}) => <div className="font-black uppercase text-xs bg-slate-100 p-2 my-4 border-l-4 border-[#00913f]" {...props} />,
+                        a: ({node, ...props}) => <a className="text-[#00913f] font-black underline hover:text-green-800" target="_blank" rel="noopener noreferrer" {...props} />,
+                        table: ({node, ...props}) => <div className="overflow-x-auto my-4"><table className="w-full border-collapse border border-slate-300" {...props} /></div>,
+                        th: ({node, ...props}) => <th className="border border-slate-300 bg-slate-50 p-2 text-[10px]" {...props} />,
+                        td: ({node, ...props}) => <td className="border border-slate-300 p-2 text-[10px]" {...props} />,
+                        strong: ({node, ...props}) => <b className="font-black text-slate-900" {...props} />,
                       }}
                     >
                       {item.response}
                     </ReactMarkdown>
                   </div>
-                  <button onClick={() => handlePrint(document.getElementById(`res-${item.id}`).innerHTML)} className="mt-4 text-[10px] font-black text-[#00913f] uppercase border-t pt-3 w-full text-left">🖨️ Exportar PDF Formal [cite: 95]</button>
+                  
+                  {/* Botão de Exportar para PDF Estilizado */}
+                  {(item.response.length > 200 || item.response.toLowerCase().includes('pei')) && (
+                    <button 
+                      onClick={() => handlePrint(document.getElementById(`ada-response-${item.id}`).innerHTML)}
+                      className="mt-4 flex items-center gap-2 text-[10px] font-black text-slate-400 hover:text-[#00913f] uppercase transition-colors pt-4 border-t border-slate-50 w-full"
+                    >
+                      <span>🖨️</span> Exportar Relatório PEI Oficial
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -116,16 +238,24 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
           <div ref={bottomRef} />
         </div>
 
-        <div className="p-5 bg-white border-t">
+        {/* INPUT AREA */}
+        <div className="p-5 bg-white border-t border-slate-100">
           <div className="relative">
             <textarea
-              className="w-full pl-6 pr-14 py-4 bg-slate-100 rounded-3xl border-none outline-none text-sm resize-none"
-              placeholder="Ex: Gere o PEI ou sugira adaptações..."
+              className="w-full pl-6 pr-14 py-4 bg-slate-50 rounded-3xl border-none focus:ring-2 focus:ring-[#00913f] outline-none text-sm text-slate-700 resize-none shadow-inner"
+              placeholder="Ex: Gere a tabela de metas para o PEI..."
+              rows="1"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAsk(); } }}
+              onKeyDown={(e) => { if(e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleAsk(); } }}
             />
-            <button onClick={handleAsk} disabled={thinking || !question.trim()} className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#00913f] text-white w-10 h-10 rounded-2xl flex items-center justify-center">➤</button>
+            <button
+              onClick={handleAsk}
+              disabled={thinking || !question.trim()}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#00913f] text-white w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-green-700 transition-all disabled:bg-slate-200 shadow-lg"
+            >
+              {thinking ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : "➤"}
+            </button>
           </div>
         </div>
       </div>
