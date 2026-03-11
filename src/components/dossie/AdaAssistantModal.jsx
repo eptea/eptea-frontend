@@ -177,7 +177,7 @@ export default function AdaAssistantModal({ isOpen, onClose, studentId, subjectI
     <div className="fixed inset-0 z-[110] flex items-center justify-end p-4 md:p-10 bg-slate-900/20 backdrop-blur-sm">
       <div className="bg-white w-full max-w-lg h-[85vh] rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden border border-slate-200 animate-in slide-in-from-right duration-300">
         
-        {/* HEADER */}
+        {/* HEADER */ }
         <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#00913f]">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-xl shadow-lg">
