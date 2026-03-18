@@ -3,9 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useApolloClient } from '@apollo/client';
 import logo from '../assets/logo.png'; // <-- Certifique-se de que o nome do arquivo está correto
 
-const client = useApolloClient();
-
 export default function NavBar({ user }) {
+  const client = useApolloClient();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
