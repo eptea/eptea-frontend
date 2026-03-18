@@ -1,10 +1,11 @@
 // src/api/apollo.js
 import { ApolloClient, InMemoryCache } from '@apollo/client';
-import { createUploadLink } from 'apollo-upload-client'; // <--- MUDANÇA AQUI
+import { createUploadLink } from 'apollo-upload-client';
 import { setContext } from '@apollo/client/link/context';
 
 const authLink = setContext((_, { headers }) => {
   const token = localStorage.getItem('token');
+
   return {
     headers: {
       ...headers,
@@ -13,12 +14,22 @@ const authLink = setContext((_, { headers }) => {
   }
 });
 
-// Usamos createUploadLink em vez de createHttpLink
 const uploadLink = createUploadLink({
   uri: import.meta.env.VITE_API_URL + "/graphql/",
 });
 
 export const client = new ApolloClient({
   link: authLink.concat(uploadLink),
-  cache: new InMemoryCache(),
+
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          me: {
+            merge: true
+          }
+        }
+      }
+    }
+  })
 });
