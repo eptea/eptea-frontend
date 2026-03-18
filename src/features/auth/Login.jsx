@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { useMutation, gql } from '@apollo/client';
+import { useApolloClient, useMutation, gql } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 
 import logo from '../../assets/logo.png'; // <-- Importação da logo
 import olhoAberto from '../../assets/olho-aberto.png';
 import olhoFechado from '../../assets/olho-vermelho (1).png'
+
 
 const LOGIN_MUTATION = gql`
   mutation Login($username: String!, $password: String!) {
@@ -18,6 +19,8 @@ const LOGIN_MUTATION = gql`
     }
   }
 `;
+
+const client = useApolloClient();
 
 export default function Login() {
   const [form, setForm] = useState({ username: '', password: '' });
@@ -33,6 +36,9 @@ export default function Login() {
       
       if (data.login.success) {
         localStorage.setItem('token', data.login.token);
+
+        await client.resetStore()
+
         if (data.login.mustChangePassword && data.login.userType !== 'management' && data.login.userType !== 'superuser') {
           navigate('/change-password');
         } else {

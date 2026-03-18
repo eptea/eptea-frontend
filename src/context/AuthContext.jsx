@@ -21,7 +21,7 @@ const GET_ME = gql`
 export function AuthProvider({ children }) {
 
   const { data, loading } = useQuery(GET_ME, {
-    fetchPolicy: "cache-first"
+    fetchPolicy: "cache-and-network"
   });
 
   return (
