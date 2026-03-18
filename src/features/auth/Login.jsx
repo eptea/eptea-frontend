@@ -20,9 +20,8 @@ const LOGIN_MUTATION = gql`
   }
 `;
 
-const client = useApolloClient();
-
 export default function Login() {
+  const client = useApolloClient();
   const [form, setForm] = useState({ username: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   
