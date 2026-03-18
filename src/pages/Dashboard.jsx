@@ -20,14 +20,17 @@ const GET_NOTIFICATIONS = gql`
       message
       changeLevel
       createdAt
-      student { id firstName lastName }
+      student {
+        id
+        firstName
+        lastName
+      }
       isRead
     }
   }
 `;
 
 export default function Dashboard() {
-
   /* ================= QUERIES ================= */
 
   const { user, loading: userLoading } = useAuth();
@@ -45,7 +48,6 @@ export default function Dashboard() {
       </div>
     );
   }
-
 
   /* ================= STATS ================= */
 
@@ -77,7 +79,6 @@ export default function Dashboard() {
             value: Number(a.value),
           })) || [],
       };
-
     } catch {
       return {
         totalStudents: 0,
@@ -110,14 +111,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
-
       <NavBar user={user} />
 
       <div className="flex">
         <Sidebar user={user} />
 
         <main className="flex-1 p-6 md:p-10 max-w-7xl">
-
           {/* HEADER */}
           <header className="mb-10">
             <h1 className="text-3xl font-black text-slate-800 italic">
@@ -131,43 +130,91 @@ export default function Dashboard() {
 
           {/* CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-
             {isTeacher ? (
               <>
-                <StatCard title="Minhas Turmas" value={stats.totalClasses} detail="Turmas vinculadas" icon="🏫" color="indigo" />
-                <StatCard title="Minhas Disciplinas" value={stats.totalSubjects} detail="Disciplinas ativas" icon="📘" color="emerald" />
-                <StatCard title="Meus Cursos" value={stats.totalCourses} detail="Cursos vinculados" icon="🎓" color="blue" />
+                <StatCard
+                  title="Minhas Turmas"
+                  value={stats.totalClasses}
+                  detail="Turmas vinculadas"
+                  icon="🏫"
+                  color="indigo"
+                />
+                <StatCard
+                  title="Minhas Disciplinas"
+                  value={stats.totalSubjects}
+                  detail="Disciplinas ativas"
+                  icon="📘"
+                  color="emerald"
+                />
+                <StatCard
+                  title="Meus Cursos"
+                  value={stats.totalCourses}
+                  detail="Cursos vinculados"
+                  icon="🎓"
+                  color="blue"
+                />
               </>
             ) : (
               <>
-                <StatCard title="Alunos TEA" value={stats.totalStudents} detail="Base total de alunos" icon="🎓" color="indigo" />
-                <StatCard title="Docentes" value={stats.totalTeachers} detail="Profissionais ativos" icon="👥" color="emerald" />
-                <StatCard title="Alertas" value={notifications.length} detail="Notificações recentes" icon="🔔" color="blue" />
+                <StatCard
+                  title="Alunos TEA"
+                  value={stats.totalStudents}
+                  detail="Base total de alunos"
+                  icon="🎓"
+                  color="indigo"
+                />
+                <StatCard
+                  title="Docentes"
+                  value={stats.totalTeachers}
+                  detail="Profissionais ativos"
+                  icon="👥"
+                  color="emerald"
+                />
+                <StatCard
+                  title="Alertas"
+                  value={notifications.length}
+                  detail="Notificações recentes"
+                  icon="🔔"
+                  color="blue"
+                />
               </>
             )}
-
           </div>
 
           {/* GRÁFICO DE ATIVIDADE */}
           <div className="bg-white p-6 rounded-3xl shadow-sm mb-10">
             <h2 className="text-lg font-bold mb-4">Atividade Recente</h2>
 
-            <div className="space-y-3">
-              {chartData.map((item, index) => (
-                <div key={index}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span>{item.label}</span>
-                    <span>{item.value}</span>
-                  </div>
+            <div className="w-full overflow-x-auto">
+              <div className="flex items-end gap-6 h-64 px-2">
+                {chartData.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex flex-col items-center flex-1"
+                  >
+                    {/* VALOR */}
+                    <span className="text-xs font-bold text-slate-500 mb-2">
+                      {item.value}
+                    </span>
 
-                  <div className="w-full bg-slate-100 h-3 rounded-full">
-                    <div
-                      className="bg-blue-500 h-3 rounded-full"
-                      style={{ width: `${item.percentage}%` }}
-                    />
+                    {/* BARRA */}
+                    <div className="w-full flex justify-center">
+                      <div
+                        className="w-8 md:w-10 bg-blue-500 rounded-2xl transition-all duration-500 hover:opacity-80"
+                        style={{
+                          height: `${item.percentage}%`,
+                          minHeight: "8px",
+                        }}
+                      />
+                    </div>
+
+                    {/* LABEL */}
+                    <span className="text-[10px] md:text-xs text-slate-400 mt-2 text-center font-bold">
+                      {item.label}
+                    </span>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
@@ -180,10 +227,7 @@ export default function Dashboard() {
             ) : (
               <div className="space-y-4">
                 {notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className="p-4 border rounded-xl bg-slate-50"
-                  >
+                  <div key={n.id} className="p-4 border rounded-xl bg-slate-50">
                     <p className="text-sm font-semibold">{n.message}</p>
                     <p className="text-xs text-slate-400">
                       {new Date(n.createdAt).toLocaleString()}
@@ -193,7 +237,6 @@ export default function Dashboard() {
               </div>
             )}
           </div>
-
         </main>
       </div>
     </div>
@@ -203,7 +246,6 @@ export default function Dashboard() {
 /* ================= COMPONENT ================= */
 
 function StatCard({ title, value, detail, icon, color }) {
-
   const colors = {
     indigo: "text-indigo-600 bg-indigo-50",
     emerald: "text-emerald-600 bg-emerald-50",
@@ -212,7 +254,9 @@ function StatCard({ title, value, detail, icon, color }) {
 
   return (
     <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm">
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-5 ${colors[color]}`}>
+      <div
+        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-5 ${colors[color]}`}
+      >
         {icon}
       </div>
 
