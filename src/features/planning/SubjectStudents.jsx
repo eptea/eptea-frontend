@@ -4,13 +4,11 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery, gql } from '@apollo/client';
 import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
+import { useAuth } from "../../context/AuthContext";
 
+// --- QUERY OTIMIZADA (Sem o 'me') ---
 const GET_SUBJECT_DETAILS = gql`
   query GetSubjectDetails($classId: ID!) {
-    me { 
-      id username firstName lastName userType profileImage 
-      institution { name } 
-    }
     classGroupById(id: $classId) {
       id name
       students { id firstName lastName username profileImage }
@@ -22,17 +20,17 @@ export default function SubjectStudents() {
   const { classId, subjectId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, loading: authLoading } = useAuth(); // Usuário global
 
   const searchParams = new URLSearchParams(location.search);
   const teacherIdFromUrl = searchParams.get("teacherId");
 
   const { data, loading, error } = useQuery(GET_SUBJECT_DETAILS, { variables: { classId } });
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl">EPTEA: GERANDO LISTA DE CHAMADA...</div>;
+  if (loading || authLoading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl">EPTEA: GERANDO LISTA DE CHAMADA...</div>;
   if (error) return <p className="p-20 text-center text-red-500">Erro: {error.message}</p>;
 
-  const user = data.me;
-  const turma = data.classGroupById;
+  const turma = data?.classGroupById;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">

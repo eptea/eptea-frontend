@@ -4,14 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
+import { useAuth } from "../../context/AuthContext"; // Import novo
 
-// --- QUERIES ---
+// --- QUERIES OTIMIZADAS (Sem o 'me') ---
 const GET_STUDENT_PAGE_DATA = gql`
   query GetStudentData {
-    me { 
-      id username firstName lastName userType profileImage 
-      institution { id name } 
-    }
     myCourses { id name }
     myClasses { id name course { id name } }
     usersByInstitution { 
@@ -21,7 +18,6 @@ const GET_STUDENT_PAGE_DATA = gql`
   }
 `;
 
-// --- MUTATIONS ---
 const CREATE_STUDENT = gql`
   mutation CreateStudent($reg: String!, $type: String!, $instId: ID, $classId: ID, $fName: String, $lName: String, $img: Upload) {
     createUser(registrationNumber: $reg, userType: $type, institutionId: $instId, classGroupId: $classId, firstName: $fName, lastName: $lName, profileImage: $img) {
@@ -40,38 +36,28 @@ const UPDATE_STUDENT_BASIC = gql`
 
 export default function StudentList() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth(); // Pega o usuário do contexto global
   const { data, loading, refetch, error } = useQuery(GET_STUDENT_PAGE_DATA);
   const [createStudent] = useMutation(CREATE_STUDENT);
   const [updateStudent] = useMutation(UPDATE_STUDENT_BASIC);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  
-  // 1. Adicionado courseId ao estado do formulário
-  const [form, setForm] = useState({ 
-    reg: '', 
-    courseId: '', 
-    classId: '', 
-    firstName: '', 
-    lastName: '', 
-    photo: null 
-  });
+  const [form, setForm] = useState({ reg: '', courseId: '', classId: '', firstName: '', lastName: '', photo: null });
 
   const [filterCourseId, setFilterCourseId] = useState('');
   const [filterClassId, setFilterClassId] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');
 
-  // Lógica de Turmas para o FILTRO da página (Cascata)
   const availableClassesForFilter = useMemo(() => {
     const classes = data?.myClasses || [];
     if (!filterCourseId) return classes;
     return classes.filter(c => c.course?.id === filterCourseId);
   }, [data, filterCourseId]);
 
-  // 2. Lógica de Turmas para o MODAL (Cascata baseada na escolha do curso no form)
   const availableClassesForModal = useMemo(() => {
     const classes = data?.myClasses || [];
-    if (!form.courseId) return []; // Retorna vazio se nenhum curso for selecionado no modal
+    if (!form.courseId) return [];
     return classes.filter(c => c.course?.id === form.courseId);
   }, [data, form.courseId]);
 
@@ -88,7 +74,6 @@ export default function StudentList() {
 
   const handleOpenEdit = (s) => {
     setEditingId(s.id);
-    // 3. Preenche o courseId ao editar para que a turma apareça selecionada corretamente
     setForm({ 
       reg: s.username, 
       courseId: s.classGroup?.course?.id || '',
@@ -109,7 +94,7 @@ export default function StudentList() {
         Swal.fire('Sucesso', 'Dados atualizados!', 'success');
       } else {
         const { data: resp } = await createStudent({ variables: { 
-          reg: form.reg, type: 'student', instId: data?.me?.institution?.id, classId: form.classId, fName: form.firstName, lName: form.lastName, img: form.photo 
+          reg: form.reg, type: 'student', instId: user?.institution?.id, classId: form.classId, fName: form.firstName, lName: form.lastName, img: form.photo 
         }});
         Swal.fire('Matriculado!', 'Aluno cadastrado.', 'success').then(() => navigate(`/students/${resp.createUser.user.id}/dossie`));
       }
@@ -117,10 +102,8 @@ export default function StudentList() {
     } catch (err) { Swal.fire('Erro', err.message, 'error'); }
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl">EPTEA: CARREGANDO...</div>;
+  if (loading || authLoading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl">EPTEA: CARREGANDO...</div>;
   if (error) return <p className="p-20 text-center text-red-500 font-bold">Erro: {error.message}</p>;
-
-  const user = data.me;
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -133,7 +116,6 @@ export default function StudentList() {
             <button onClick={() => { setEditingId(null); setForm({reg:'', courseId: '', classId:'', firstName:'', lastName:'', photo: null}); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">➕ Nova Matrícula</button>
           </div>
 
-          {/* FILTROS DA PÁGINA (Mantidos) */}
           <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
             <div>
               <label className="text-[10px] font-black text-slate-400 uppercase ml-2">1. Curso</label>
@@ -156,7 +138,6 @@ export default function StudentList() {
             <button onClick={() => { setFilterCourseId(''); setFilterClassId(''); }} className="p-3 text-[10px] font-black uppercase text-indigo-600">Limpar Tudo</button>
           </div>
 
-          {/* GRID DE CARDS (Mantido) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {filteredAndSortedStudents.map(s => (
               <div key={s.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden relative">
@@ -179,7 +160,6 @@ export default function StudentList() {
             ))}
           </div>
 
-          {/* MODAL COM CASCATA: CURSO -> TURMA */}
           {isModalOpen && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
               <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-in zoom-in duration-200">
@@ -194,34 +174,19 @@ export default function StudentList() {
                     <input className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" placeholder="Sobrenome" value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} required />
                   </div>
 
-                  {/* 4. ESCOLHA DO CURSO (MODAL) */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-3">1. Selecione o Curso</label>
-                    <select 
-                      className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" 
-                      value={form.courseId} 
-                      onChange={e => setForm({...form, courseId: e.target.value, classId: ''})} // Limpa a turma ao mudar o curso
-                      required
-                    >
+                    <select className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner" value={form.courseId} onChange={e => setForm({...form, courseId: e.target.value, classId: ''})} required>
                       <option value="">Escolha o curso...</option>
                       {data?.myCourses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
 
-                  {/* 5. ESCOLHA DA TURMA (FILTRADA) */}
                   <div className="space-y-1">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-3">2. Selecione a Turma</label>
-                    <select 
-                      className={`w-full p-4 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner transition-all ${!form.courseId ? 'bg-slate-100 opacity-50 cursor-not-allowed' : 'bg-slate-50'}`}
-                      value={form.classId} 
-                      onChange={e => setForm({...form, classId: e.target.value})} 
-                      disabled={!form.courseId}
-                      required
-                    >
+                    <select className={`w-full p-4 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-indigo-500 shadow-inner transition-all ${!form.courseId ? 'bg-slate-100 opacity-50 cursor-not-allowed' : 'bg-slate-50'}`} value={form.classId} onChange={e => setForm({...form, classId: e.target.value})} disabled={!form.courseId} required>
                       <option value="">{form.courseId ? "Agora escolha a turma..." : "Selecione o curso primeiro"}</option>
-                      {availableClassesForModal.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
+                      {availableClassesForModal.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </select>
                   </div>
 

@@ -3,6 +3,9 @@ import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, gql } from "@apollo/client";
 import Swal from "sweetalert2";
 
+// Contexto de Autenticação Otimizado
+import { useAuth } from "../../context/AuthContext";
+
 // Componentes de Layout
 import NavBar from "../../layouts/Navbar";
 import Sidebar from "../../layouts/Sidebar";
@@ -18,19 +21,9 @@ import { ModalDossie, ModalSubjectPlan } from "../../components/dossie/Modals";
 import StudentForum from "../../components/dossie/StudentForum";
 import AdaAssistantModal from "../../components/dossie/AdaAssistantModal";
 
-// --- QUERIES ---
+// --- QUERIES OTIMIZADAS (Sem a query 'me') ---
 const GET_STUDENT_DOSSIE = gql`
   query GetDossie($id: ID!, $subjectId: ID, $teacherId: ID) {
-    me {
-      id
-      username
-      firstName
-      lastName
-      userType
-      profileImage
-      institution { name }
-    }
-
     userById(id: $id) {
       id
       firstName
@@ -95,20 +88,23 @@ export default function StudentDossie() {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  
+  // Pegamos o usuário e o estado de carregamento do AuthContext global
+  const { user, loading: authLoading } = useAuth();
 
   const searchParams = new URLSearchParams(location.search);
-  const currentSubjectId = new URLSearchParams(location.search).get("subjectId");
+  const currentSubjectId = searchParams.get("subjectId");
   const currentTeacherId = searchParams.get("teacherId");
 
   const { data, loading, refetch, error } = useQuery(GET_STUDENT_DOSSIE, {
-  variables: {
-    id,
-    subjectId: currentSubjectId || null,
-    teacherId: currentTeacherId || null, // só será usado se backend precisar
-  },
-  skip: !id,
-  fetchPolicy: "network-only",
-});
+    variables: {
+      id,
+      subjectId: currentSubjectId || null,
+      teacherId: currentTeacherId || null,
+    },
+    skip: !id,
+    fetchPolicy: "network-only",
+  });
 
   const [updateTEA] = useMutation(UPDATE_TEA);
   const [updateSubjectPlan] = useMutation(UPDATE_SUBJECT_PLAN);
@@ -151,11 +147,16 @@ export default function StudentDossie() {
     return `${f?.charAt(0) || ""}${l?.charAt(0) || ""}`.toUpperCase();
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse">CARREGANDO...</div>;
+  // Verificamos o carregamento de ambos: Query e Auth
+  if (loading || authLoading) return (
+    <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl uppercase tracking-widest">
+      Sincronizando Dossiê PDI...
+    </div>
+  );
+
   if (error) return <p className="p-20 text-center text-red-500 font-bold">Erro: {error.message}</p>;
 
   const student = data?.userById;
-  const user = data?.me;
   const plan = data?.subjectAccessibilityPlan;
 
   return (
@@ -209,17 +210,11 @@ export default function StudentDossie() {
               {currentSubjectId && <StudentForum studentId={id} subjectId={currentSubjectId} teacherId={currentTeacherId} userType={user?.userType} />}
             </div>
 
-            {/* SIDEBAR DE DOCUMENTOS ATUALIZADA */}
             <div className="lg:col-span-4">
               <div className="sticky top-24 space-y-8">
                 <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 space-y-8">
                   <h2 className="font-black text-xs uppercase text-slate-800 tracking-widest flex items-center gap-2"><span>📄</span> Documentação</h2>
                   
-                  
-
-                  
-
-                  {/* 3. PDIs e PLANOS (Gerais) */}
                   <DocumentSection
                     title="PDIs e Planos"
                     user={user}
@@ -231,7 +226,6 @@ export default function StudentDossie() {
                     canUpload={["aee", "management"].includes(user?.userType) && !currentSubjectId}
                   />
 
-                  {/* 1. MATERIAIS DA DISCIPLINA (Restaura os arquivos do professor) */}
                   {currentSubjectId && (
                     <DocumentSection
                       title="Materiais da Aula"
@@ -252,11 +246,28 @@ export default function StudentDossie() {
         </main>
       </div>
 
-      {/* BOTÃO ADA E MODAIS (Abaixo) */}
-      {currentSubjectId && ["teacher", "aee"].includes(user?.userType) && <button onClick={() => setIsAdaOpen(true)} className="fixed bottom-10 right-10 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 text-2xl">✨</button>}
+      {/* BOTÃO ADA E MODAIS */}
+      {currentSubjectId && ["teacher", "aee"].includes(user?.userType) && (
+        <button 
+          onClick={() => setIsAdaOpen(true)} 
+          className="fixed bottom-10 right-10 w-16 h-16 bg-indigo-600 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 text-2xl"
+        >
+          ✨
+        </button>
+      )}
+      
       {isEditingGlobal && <ModalDossie form={form} setForm={setForm} onClose={() => setIsEditingGlobal(false)} onSave={handleSaveGlobal} />}
       {isEditingSubject && <ModalSubjectPlan form={subjectForm} setForm={setSubjectForm} onClose={() => setIsEditingSubject(false)} onSave={handleSaveSubject} />}
-      {currentSubjectId && <AdaAssistantModal isOpen={isAdaOpen} onClose={() => setIsAdaOpen(false)} studentId={id} subjectId={currentSubjectId} teacherId={currentTeacherId}/>}
+      
+      {currentSubjectId && (
+        <AdaAssistantModal 
+          isOpen={isAdaOpen} 
+          onClose={() => setIsAdaOpen(false)} 
+          studentId={id} 
+          subjectId={currentSubjectId} 
+          teacherId={currentTeacherId}
+        />
+      )}
     </div>
   );
 }

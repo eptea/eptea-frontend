@@ -4,13 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
+import { useAuth } from "../../context/AuthContext"; // Import novo
 
+// --- QUERY OTIMIZADA (Sem o 'me') ---
 const GET_COURSE_CLASSES_DATA = gql`
   query GetCourseDetail($courseId: ID!) {
-    me { 
-      id username firstName lastName userType profileImage 
-      institution { id name } 
-    }
     classesByCourse(courseId: $courseId) { 
       id 
       name 
@@ -31,6 +29,7 @@ const CREATE_CLASS_IN_COURSE = gql`
 export default function CourseDetail() {
   const { courseId } = useParams();
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth(); // Usuário global
   
   const { data, loading, refetch, error } = useQuery(GET_COURSE_CLASSES_DATA, {
     variables: { courseId }
@@ -43,11 +42,11 @@ export default function CourseDetail() {
   const [tempAssignments, setTempAssignments] = useState([]);
   const [currentAssign, setCurrentAssign] = useState({ subjectId: '', teacherId: '' });
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl">EPTEA: ACESSANDO UNIDADES...</div>;
+  if (loading || authLoading) return <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse text-xl">EPTEA: ACESSANDO UNIDADES...</div>;
   if (error) return <p className="p-20 text-center text-red-500 font-bold">Erro: {error.message}</p>;
 
-  const user = data.me;
-  const isManagement = ['management', 'aee'].includes(user.userType);
+  // Lógica de permissão usando o contexto global
+  const isManagement = ['management', 'aee'].includes(user?.userType);
   const teachers = (data?.usersByInstitution || []).filter(u => u.userType === 'teacher');
 
   const handleAddAssignment = () => {

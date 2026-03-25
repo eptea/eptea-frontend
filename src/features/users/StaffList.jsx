@@ -3,10 +3,11 @@ import { useQuery, useMutation, gql } from '@apollo/client';
 import Swal from 'sweetalert2';
 import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
+import { useAuth } from "../../context/AuthContext";
 
+// --- QUERY OTIMIZADA ---
 const GET_STAFF_DATA = gql`
   query GetStaffData {
-    me { id username firstName lastName userType profileImage institution { id name } }
     usersByInstitution { id firstName lastName userType username profileImage }
   }
 `;
@@ -20,18 +21,18 @@ const CREATE_USER = gql`
 `;
 
 export default function StaffList() {
+  const { user: me, loading: authLoading } = useAuth(); // Usuário global
   const { data, loading, refetch, error } = useQuery(GET_STAFF_DATA);
   const [createUser] = useMutation(CREATE_USER);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({ reg: '', type: 'teacher' });
 
-  if (loading) return <div className="h-screen flex items-center justify-center font-black text-slate-300 animate-pulse text-xl">EPTEA: CARREGANDO DOCENTES...</div>;
+  if (loading || authLoading) return <div className="h-screen flex items-center justify-center font-black text-slate-300 animate-pulse text-xl">EPTEA: CARREGANDO DOCENTES...</div>;
   if (error) return <p className="p-20 text-center text-red-500 font-bold">Erro: {error.message}</p>;
 
-  const me = data.me;
   const staff = (data?.usersByInstitution || []).filter(u => {
-    if (me.userType === 'management') return u.userType === 'teacher' || u.userType === 'aee';
-    if (me.userType === 'aee') return u.userType === 'teacher';
+    if (me?.userType === 'management') return u.userType === 'teacher' || u.userType === 'aee';
+    if (me?.userType === 'aee') return u.userType === 'teacher';
     return false;
   });
 
@@ -88,7 +89,7 @@ export default function StaffList() {
                   <input className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={form.reg} onChange={e => setForm({...form, reg: e.target.value})} placeholder="Matrícula / Usuário" required />
                   <select className="w-full p-4 bg-slate-50 border-none rounded-2xl font-bold outline-none focus:ring-2 focus:ring-blue-500 shadow-inner" value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
                     <option value="teacher">Professor Regular</option>
-                    {me.userType === 'management' && <option value="aee">Especialista AEE</option>}
+                    {me?.userType === 'management' && <option value="aee">Especialista AEE</option>}
                   </select>
                   <div className="flex gap-4 pt-4">
                     <button type="submit" className="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-100">Confirmar</button>
