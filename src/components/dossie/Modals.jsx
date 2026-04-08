@@ -89,7 +89,7 @@ export function ModalSubjectPlan({ form, setForm, onClose, onSave }) {
     return (
         <div className="fixed inset-0 bg-indigo-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
             <div className="bg-white w-full max-w-4xl rounded-[3.5rem] shadow-2xl p-10">
-                <h2 className="text-3xl font-black mb-8 italic text-indigo-600 text-center">Plano de Acessibilidade Curricular</h2>
+                <h2 className="text-3xl font-black mb-8 italic text-indigo-600 text-center">Plano da Disciplina</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {fields.map(f => (
                         <div key={f.id}>

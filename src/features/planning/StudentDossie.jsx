@@ -138,7 +138,7 @@ export default function StudentDossie() {
   const handleSaveSubject = async () => {
     try {
       await updateSubjectPlan({ variables: { studentId: id, subjectId: currentSubjectId, ...subjectForm } });
-      Swal.fire("Sucesso!", "Plano de aula adaptado.", "success");
+      Swal.fire("Sucesso!", "Plano da Disciplina Salvo.", "success");
       setIsEditingSubject(false); refetch();
     } catch (e) { Swal.fire("Erro", e.message, "error"); }
   };
