@@ -1,4 +1,3 @@
-// src/pages/Dashboard.jsx
 import React, { useMemo } from "react";
 import { useQuery, gql } from "@apollo/client";
 import NavBar from "../layouts/Navbar";
@@ -7,12 +6,14 @@ import { useAuth } from "../context/AuthContext";
 
 /* ================= QUERIES ================= */
 
+// Busca estatísticas numéricas e dados do gráfico (formatados como JSON pelo Django)
 const GET_DASHBOARD_STATS = gql`
   query DashboardStats {
     dashboardStats
   }
 `;
 
+// Busca a lista detalhada de notificações para o Mural
 const GET_NOTIFICATIONS = gql`
   query Notifications {
     myNotifications {
@@ -31,70 +32,55 @@ const GET_NOTIFICATIONS = gql`
 `;
 
 export default function Dashboard() {
-  /* ================= QUERIES ================= */
-
   const { user, loading: userLoading } = useAuth();
 
-  const { data: statsData } = useQuery(GET_DASHBOARD_STATS);
-
-  const { data: notificationsData } = useQuery(GET_NOTIFICATIONS, {
-    pollInterval: 15000,
+  // Query de Estatísticas
+  const { data: statsData } = useQuery(GET_DASHBOARD_STATS, {
+    fetchPolicy: "network-only"
   });
 
-  if (userLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse uppercase tracking-widest">
-        Sincronizando Dashboard...
-      </div>
-    );
-  }
+  // Query do Mural (Polling a cada 15 segundos para monitorar mudanças do AEE)
+  const { data: notificationsData } = useQuery(GET_NOTIFICATIONS, {
+    pollInterval: 15000, 
+    fetchPolicy: "network-only"
+  });
 
-  /* ================= STATS ================= */
+  /* ================= PROCESSAMENTO DE DADOS ================= */
 
+  // Faz o parse do JSON vindo do Django e define valores padrão para evitar erros
   const stats = useMemo(() => {
-    if (!statsData?.dashboardStats) {
-      return {
-        totalStudents: 0,
-        totalTeachers: 0,
-        notificationsCount: 0,
-        activity: [],
-        studentsPerCourse: [],
-        totalSubjects: 0,
-        totalClasses: 0,
-        totalCourses: 0,
-      };
-    }
+    const defaultStats = {
+      totalStudents: 0,
+      totalTeachers: 0,
+      notificationsCount: 0,
+      activity: [],
+      totalSubjects: 0,
+      totalClasses: 0,
+      totalCourses: 0,
+    };
+
+    if (!statsData?.dashboardStats) return defaultStats;
 
     try {
-      const parsed =
-        typeof statsData.dashboardStats === "string"
-          ? JSON.parse(statsData.dashboardStats)
-          : statsData.dashboardStats;
+      const parsed = typeof statsData.dashboardStats === "string"
+        ? JSON.parse(statsData.dashboardStats)
+        : statsData.dashboardStats;
 
       return {
+        ...defaultStats,
         ...parsed,
-        activity:
-          parsed.activity?.map((a) => ({
-            ...a,
-            value: Number(a.value),
-          })) || [],
+        activity: parsed.activity?.map((a) => ({
+          ...a,
+          value: Number(a.value),
+        })) || [],
       };
-    } catch {
-      return {
-        totalStudents: 0,
-        totalTeachers: 0,
-        notificationsCount: 0,
-        activity: [],
-        studentsPerCourse: [],
-        totalSubjects: 0,
-        totalClasses: 0,
-        totalCourses: 0,
-      };
+    } catch (e) {
+      console.error("Erro no processamento das estatísticas:", e);
+      return defaultStats;
     }
   }, [statsData]);
 
-  const isTeacher = user?.userType === "teacher";
-
+  // Calcula as porcentagens das barras do gráfico de atividade
   const chartData = useMemo(() => {
     const rawActivity = stats.activity || [];
     const maxVal = Math.max(...rawActivity.map((a) => a.value), 1);
@@ -106,8 +92,17 @@ export default function Dashboard() {
   }, [stats]);
 
   const notifications = notificationsData?.myNotifications || [];
+  const isTeacher = user?.userType === "teacher";
 
-  /* ================= UI ================= */
+  if (userLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-50 font-black text-slate-300 animate-pulse uppercase tracking-widest">
+        Sincronizando Dashboard...
+      </div>
+    );
+  }
+
+  /* ================= RENDERIZAÇÃO ================= */
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -122,13 +117,12 @@ export default function Dashboard() {
             <h1 className="text-3xl font-black text-slate-800 italic">
               Painel de Controle
             </h1>
-
             <p className="text-slate-500 font-medium">
               {user?.institution?.name} • Gestão de Inclusão
             </p>
           </header>
 
-          {/* CARDS */}
+          {/* CARDS DE RESUMO (Condicionais por tipo de usuário) */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
             {isTeacher ? (
               <>
@@ -142,15 +136,15 @@ export default function Dashboard() {
                 <StatCard
                   title="Minhas Disciplinas"
                   value={stats.totalSubjects}
-                  detail="Disciplinas ativas"
+                  detail="Componentes ativos"
                   icon="📘"
                   color="emerald"
                 />
                 <StatCard
-                  title="Meus Cursos"
-                  value={stats.totalCourses}
-                  detail="Cursos vinculados"
-                  icon="🎓"
+                  title="Alertas"
+                  value={stats.notificationsCount}
+                  detail="Atualizações de Dossiês"
+                  icon="🔔"
                   color="blue"
                 />
               </>
@@ -159,21 +153,21 @@ export default function Dashboard() {
                 <StatCard
                   title="Alunos TEA"
                   value={stats.totalStudents}
-                  detail="Base total de alunos"
+                  detail="Total da instituição"
                   icon="🎓"
                   color="indigo"
                 />
                 <StatCard
-                  title="Docentes"
+                  title="Corpo Docente"
                   value={stats.totalTeachers}
-                  detail="Profissionais ativos"
+                  detail="Professores ativos"
                   icon="👥"
                   color="emerald"
                 />
                 <StatCard
-                  title="Alertas"
+                  title="Total Alertas"
                   value={notifications.length}
-                  detail="Notificações recentes"
+                  detail="Notificações institucionais"
                   icon="🔔"
                   color="blue"
                 />
@@ -182,34 +176,21 @@ export default function Dashboard() {
           </div>
 
           {/* GRÁFICO DE ATIVIDADE */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm mb-10">
-            <h2 className="text-lg font-bold mb-4">Atividade Recente</h2>
+          <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-10">
+            <h2 className="text-lg font-black text-slate-800 italic mb-6 ml-2">Engajamento Pedagógico</h2>
 
             <div className="w-full overflow-x-auto">
-              <div className="flex items-end gap-6 h-64 px-2">
+              <div className="flex items-end gap-6 h-64 px-2 min-w-[500px]">
                 {chartData.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex flex-col items-center flex-1"
-                  >
-                    {/* VALOR */}
-                    <span className="text-xs font-bold text-slate-500 mb-2">
-                      {item.value}
-                    </span>
-
-                    {/* BARRA */}
+                  <div key={index} className="flex flex-col items-center flex-1">
+                    <span className="text-xs font-black text-slate-400 mb-2">{item.value}</span>
                     <div className="w-full flex justify-center">
                       <div
-                        className="w-8 md:w-10 bg-blue-500 rounded-2xl transition-all duration-500 hover:opacity-80"
-                        style={{
-                          height: `${item.percentage}%`,
-                          minHeight: "8px",
-                        }}
+                        className="w-10 bg-indigo-500 rounded-2xl transition-all duration-700 hover:bg-indigo-600 shadow-lg shadow-indigo-100"
+                        style={{ height: `${item.percentage}%`, minHeight: "12px" }}
                       />
                     </div>
-
-                    {/* LABEL */}
-                    <span className="text-[10px] md:text-xs text-slate-400 mt-2 text-center font-bold">
+                    <span className="text-[10px] text-slate-400 mt-3 font-black uppercase tracking-tighter">
                       {item.label}
                     </span>
                   </div>
@@ -218,57 +199,51 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* SEÇÃO DE NOTIFICAÇÕES (MURAL) */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black text-slate-800 italic">
+          {/* MURAL DE ATUALIZAÇÕES (NOTIFICAÇÕES DO AEE) */}
+          <div className="bg-white p-8 rounded-[3rem] shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-black text-slate-800 italic text-center md:text-left">
                 Mural de Atualizações
               </h2>
-              <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+              <span className="bg-blue-100 text-blue-600 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest hidden md:block">
                 Tempo Real
               </span>
             </div>
 
             {notifications.length === 0 ? (
-              <div className="py-10 text-center">
-                <p className="text-slate-400 font-medium">
-                  Nenhuma movimentação pedagógica hoje.
-                </p>
+              <div className="py-20 text-center">
+                <p className="text-slate-400 font-bold italic">Nenhuma movimentação pedagógica hoje.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {notifications.map((n) => (
                   <div
                     key={n.id}
-                    className={`p-4 rounded-2xl border-l-4 transition-all hover:shadow-md ${
-                      n.changeLevel === "HIGH"
-                        ? "bg-red-50 border-red-500"
-                        : n.changeLevel === "MEDIUM"
-                          ? "bg-amber-50 border-amber-500"
+                    className={`p-5 rounded-[2rem] border-l-8 transition-all hover:shadow-md ${
+                      n.changeLevel === "HIGH" 
+                        ? "bg-red-50 border-red-500 shadow-red-50" 
+                        : n.changeLevel === "MEDIUM" 
+                          ? "bg-amber-50 border-amber-500 shadow-amber-50" 
                           : "bg-slate-50 border-slate-300"
                     }`}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
-                        {new Date(n.createdAt).toLocaleDateString()} •{" "}
-                        {new Date(n.createdAt).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="text-[10px] font-black uppercase text-slate-400 tracking-tighter">
+                        {new Date(n.createdAt).toLocaleDateString()} • {new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      {n.changeLevel === "HIGH" && (
-                        <span className="text-red-500 animate-pulse">⚠️</span>
-                      )}
+                      {n.changeLevel === "HIGH" && <span className="text-red-500 animate-pulse">⚠️</span>}
                     </div>
-                    <p className="text-sm font-bold text-slate-700 leading-tight">
+                    
+                    <p className="text-sm font-bold text-slate-700 leading-tight mb-4">
                       {n.message}
                     </p>
-                    <div className="mt-3 flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold">
+                    
+                    <div className="flex items-center gap-3 bg-white/50 p-2 rounded-xl w-fit pr-4">
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xs font-black">
                         {n.student?.firstName[0]}
                       </div>
-                      <span className="text-xs font-medium text-slate-500">
-                        Aluno: {n.student?.firstName} {n.student?.lastName}
+                      <span className="text-xs font-black text-slate-500 uppercase">
+                        {n.student?.firstName} {n.student?.lastName}
                       </span>
                     </div>
                   </div>
@@ -282,7 +257,7 @@ export default function Dashboard() {
   );
 }
 
-/* ================= COMPONENT ================= */
+/* ================= COMPONENTE STATCARD ================= */
 
 function StatCard({ title, value, detail, icon, color }) {
   const colors = {
@@ -292,16 +267,13 @@ function StatCard({ title, value, detail, icon, color }) {
   };
 
   return (
-    <div className="bg-white p-8 rounded-[2.5rem] border shadow-sm">
-      <div
-        className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl mb-5 ${colors[color]}`}
-      >
+    <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm transition-all hover:shadow-md">
+      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-sm ${colors[color]}`}>
         {icon}
       </div>
-
-      <p className="text-4xl font-black text-slate-800">{value}</p>
-      <p className="text-xs font-black text-slate-400 uppercase">{title}</p>
-      <p className="text-xs text-slate-300 italic">{detail}</p>
+      <p className="text-5xl font-black text-slate-800 tracking-tighter mb-1">{value}</p>
+      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">{title}</p>
+      <p className="text-[10px] text-slate-300 font-bold italic mt-2">{detail}</p>
     </div>
   );
 }
