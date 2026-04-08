@@ -44,6 +44,7 @@ const GET_STUDENT_DOSSIE = gql`
 
       teaProfile {
         disabilityDescription
+        adaptationLevel
         educationalHistory
         pastAdaptations
         institutionalHistory
@@ -73,8 +74,8 @@ const GET_STUDENT_DOSSIE = gql`
 
 // --- MUTATIONS ---
 const UPDATE_TEA = gql`
-  mutation UpdateTEA($id: ID!, $disabilityDescription: String, $educationalHistory: String, $pastAdaptations: String, $institutionalHistory: String, $challengesAndTriggers: String, $strengthsAndInterests: String, $communicationProfile: String, $healthAndNutrition: String, $crisisIntervention: String, $pedagogicalGuidelines: String, $certificationType: String) {
-    updateTeaProfile(studentId: $id, disabilityDescription: $disabilityDescription, educationalHistory: $educationalHistory, pastAdaptations: $pastAdaptations, institutionalHistory: $institutionalHistory, challengesAndTriggers: $challengesAndTriggers, strengthsAndInterests: $strengthsAndInterests, communicationProfile: $communicationProfile, healthAndNutrition: $healthAndNutrition, crisisIntervention: $crisisIntervention, pedagogicalGuidelines: $pedagogicalGuidelines, certificationType: $certificationType) { success }
+  mutation UpdateTEA($id: ID!, $disabilityDescription: String, $adaptationLevel: String, $educationalHistory: String, $pastAdaptations: String, $institutionalHistory: String, $challengesAndTriggers: String, $strengthsAndInterests: String, $communicationProfile: String, $healthAndNutrition: String, $crisisIntervention: String, $pedagogicalGuidelines: String, $certificationType: String) {
+    updateTeaProfile(studentId: $id, disabilityDescription: $disabilityDescription, adaptationLevel: $adaptationLevel, educationalHistory: $educationalHistory, pastAdaptations: $pastAdaptations, institutionalHistory: $institutionalHistory, challengesAndTriggers: $challengesAndTriggers, strengthsAndInterests: $strengthsAndInterests, communicationProfile: $communicationProfile, healthAndNutrition: $healthAndNutrition, crisisIntervention: $crisisIntervention, pedagogicalGuidelines: $pedagogicalGuidelines, certificationType: $certificationType) { success }
   }
 `;
 
