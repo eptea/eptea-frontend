@@ -218,20 +218,59 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* NOTIFICAÇÕES */}
-          <div className="bg-white p-6 rounded-3xl shadow-sm">
-            <h2 className="text-lg font-bold mb-4">Notificações</h2>
+          {/* SEÇÃO DE NOTIFICAÇÕES (MURAL) */}
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-black text-slate-800 italic">
+                Mural de Atualizações
+              </h2>
+              <span className="bg-blue-100 text-blue-600 text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+                Tempo Real
+              </span>
+            </div>
 
             {notifications.length === 0 ? (
-              <p className="text-slate-400">Nenhuma notificação</p>
+              <div className="py-10 text-center">
+                <p className="text-slate-400 font-medium">
+                  Nenhuma movimentação pedagógica hoje.
+                </p>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {notifications.map((n) => (
-                  <div key={n.id} className="p-4 border rounded-xl bg-slate-50">
-                    <p className="text-sm font-semibold">{n.message}</p>
-                    <p className="text-xs text-slate-400">
-                      {new Date(n.createdAt).toLocaleString()}
+                  <div
+                    key={n.id}
+                    className={`p-4 rounded-2xl border-l-4 transition-all hover:shadow-md ${
+                      n.changeLevel === "HIGH"
+                        ? "bg-red-50 border-red-500"
+                        : n.changeLevel === "MEDIUM"
+                          ? "bg-amber-50 border-amber-500"
+                          : "bg-slate-50 border-slate-300"
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
+                        {new Date(n.createdAt).toLocaleDateString()} •{" "}
+                        {new Date(n.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                      {n.changeLevel === "HIGH" && (
+                        <span className="text-red-500 animate-pulse">⚠️</span>
+                      )}
+                    </div>
+                    <p className="text-sm font-bold text-slate-700 leading-tight">
+                      {n.message}
                     </p>
+                    <div className="mt-3 flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold">
+                        {n.student?.firstName[0]}
+                      </div>
+                      <span className="text-xs font-medium text-slate-500">
+                        Aluno: {n.student?.firstName} {n.student?.lastName}
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
