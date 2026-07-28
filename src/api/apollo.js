@@ -15,7 +15,7 @@ const authLink = setContext((_, { headers }) => {
 });
 
 const uploadLink = createUploadLink({
-  uri: import.meta.env.VITE_API_URL + "/graphql/",
+  uri: "https://api.eptea.com.br/graphql/",
 });
 
 export const client = new ApolloClient({
