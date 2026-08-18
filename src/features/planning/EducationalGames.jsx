@@ -3,6 +3,23 @@ import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
 import { useAuth } from "../../context/AuthContext";
 
+// --- MAPEAMENTO VISUAL (ÍCONES) ---
+const COURSE_ICONS = {
+  'TODOS': '🌐',
+  'Adm': '💼',
+  'Agroindustria': '🏭',
+  'Agropecuária': '🚜',
+  'Zootecnia': '🐄'
+};
+
+const CATEGORY_ICONS = {
+  'TODAS': '🎯',
+  'ORGANIZAÇÃO': '📅',
+  'HABILIDADES SOCIAIS': '🤝',
+  'MATEMÁTICA': '🧮',
+  'LINGUAGENS': '📚'
+};
+
 const STATIC_GAMES = [
   {
     id: 1,
@@ -10,7 +27,7 @@ const STATIC_GAMES = [
     description: "Jogo de arrastar e soltar para organizar as tarefas do dia a dia escolar, auxiliando na previsibilidade.",
     image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80",
     category: "ORGANIZAÇÃO",
-    courses: ["Adm", "Agropecuária"] // Específico para estes cursos
+    courses: ["Adm", "Agropecuária"] 
   },
   {
     id: 2,
@@ -18,7 +35,7 @@ const STATIC_GAMES = [
     description: "Identifique expressões faciais e situações sociais para ganhar pontos e evoluir o avatar.",
     image: "https://images.unsplash.com/photo-1610116306796-6fea9f4fae38?w=400&q=80",
     category: "HABILIDADES SOCIAIS",
-    courses: ["Zootecnia"] // Específico para este curso
+    courses: ["Zootecnia"] 
   },
   {
     id: 3,
@@ -26,7 +43,7 @@ const STATIC_GAMES = [
     description: "Utilize peças visuais como blocos e fatias para entender frações matemáticas de forma concreta.",
     image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&q=80",
     category: "MATEMÁTICA",
-    courses: ["TODOS"] // Matemática está em todos
+    courses: ["TODOS"] 
   },
   {
     id: 4,
@@ -34,7 +51,7 @@ const STATIC_GAMES = [
     description: "Forme palavras conectando sílabas em bolhas flutuantes. Focado no método fônico e visual.",
     image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&q=80",
     category: "LINGUAGENS",
-    courses: ["TODOS"] // Português/Linguagens está em todos
+    courses: ["TODOS"] 
   }
 ];
 
@@ -52,7 +69,6 @@ export default function EducationalGames() {
         if (course !== 'TODOS') uniqueCourses.add(course);
       });
     });
-    // Retorna 'TODOS' e os cursos encontrados em ordem alfabética
     return ['TODOS', ...Array.from(uniqueCourses).sort()];
   }, []);
 
@@ -65,12 +81,8 @@ export default function EducationalGames() {
   // 3. Filtro Cruzado (Curso + Área)
   const filteredGames = useMemo(() => {
     return STATIC_GAMES.filter(game => {
-      // Verifica Área
       const matchArea = selectedArea === 'TODAS' || game.category === selectedArea;
-      
-      // Verifica Curso (Aceita se o jogo for para "TODOS" ou se incluir o curso selecionado)
       const matchCourse = selectedCourse === 'TODOS' || game.courses.includes('TODOS') || game.courses.includes(selectedCourse);
-      
       return matchArea && matchCourse;
     });
   }, [selectedArea, selectedCourse]);
@@ -92,7 +104,7 @@ export default function EducationalGames() {
             </div>
           </header>
 
-          {/* PAINEL DE FILTROS DUPLOS */}
+          {/* PAINEL DE FILTROS DUPLOS COM ÍCONES */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 space-y-5 animate-in fade-in slide-in-from-top-4">
             
             {/* Linha 1: Curso Dinâmico */}
@@ -103,12 +115,13 @@ export default function EducationalGames() {
                   <button
                     key={course}
                     onClick={() => setSelectedCourse(course)}
-                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 ${
                       selectedCourse === course 
                         ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
                         : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-500'
                     }`}
                   >
+                    <span className="text-sm">{COURSE_ICONS[course] || '📌'}</span>
                     {course}
                   </button>
                 ))}
@@ -123,12 +136,13 @@ export default function EducationalGames() {
                   <button
                     key={area}
                     onClick={() => setSelectedArea(area)}
-                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 ${
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 ${
                       selectedArea === area 
                         ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
                         : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-indigo-500'
                     }`}
                   >
+                    <span className="text-sm">{CATEGORY_ICONS[area] || '🧩'}</span>
                     {area}
                   </button>
                 ))}
@@ -144,7 +158,8 @@ export default function EducationalGames() {
                 <div className="h-48 overflow-hidden relative">
                   <img src={game.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={game.title} />
                   <div className="absolute top-4 left-4">
-                    <span className="bg-white/90 backdrop-blur shadow-sm px-4 py-1.5 rounded-2xl text-[9px] font-black text-indigo-600 uppercase tracking-widest">
+                    <span className="bg-white/90 backdrop-blur shadow-sm px-4 py-1.5 rounded-2xl text-[9px] font-black text-indigo-600 uppercase tracking-widest flex items-center gap-1">
+                        <span>{CATEGORY_ICONS[game.category] || '🧩'}</span>
                         {game.category}
                     </span>
                   </div>
