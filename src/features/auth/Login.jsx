@@ -65,7 +65,7 @@ export default function Login() {
             <img src={logo} alt="EPTEA Logo" className="w-12 h-12 object-contain" />
             <h2 className="text-4xl font-black text-blue-600 tracking-tighter italic">EPTEA</h2>
           </div>
-          <p className="text-slate-500 font-medium">Bem-vindo ao portal educacional</p>
+          <p className="text-slate-500 font-medium">Educação Profissional e Transtorno do Espectro Autista</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
