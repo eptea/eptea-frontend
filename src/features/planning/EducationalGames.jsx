@@ -3,39 +3,49 @@ import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
 import { useAuth } from "../../context/AuthContext";
 
+// Lista estática de cursos para o filtro
+const STATIC_COURSES = ['TODOS', 'Adm', 'Agroindustria', 'Agropecuária', 'Zootecnia'];
+
 const STATIC_GAMES = [
   {
     id: 1,
     title: "Desafio da Rotina",
     description: "Jogo de arrastar e soltar para organizar as tarefas do dia a dia escolar, auxiliando na previsibilidade.",
     image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80",
-    category: "ORGANIZAÇÃO"
+    category: "ORGANIZAÇÃO",
+    courses: ["TODOS"] // Aparece em todos os cursos
   },
   {
     id: 2,
     title: "Mestre das Emoções",
     description: "Identifique expressões faciais e situações sociais para ganhar pontos e evoluir o avatar.",
     image: "https://images.unsplash.com/photo-1610116306796-6fea9f4fae38?w=400&q=80",
-    category: "HABILIDADES SOCIAIS"
+    category: "HABILIDADES SOCIAIS",
+    courses: ["TODOS"]
   },
   {
     id: 3,
     title: "Laboratório de Frações",
     description: "Utilize peças visuais como blocos e fatias para entender frações matemáticas de forma concreta.",
     image: "https://images.unsplash.com/photo-1509228468518-180dd4864904?w=400&q=80",
-    category: "MATEMÁTICA"
+    category: "MATEMÁTICA",
+    courses: ["TODOS"] // Matemática está em todos
   },
   {
     id: 4,
     title: "Construtor Fônico",
     description: "Forme palavras conectando sílabas em bolhas flutuantes. Focado no método fônico e visual.",
     image: "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400&q=80",
-    category: "LINGUAGENS"
+    category: "LINGUAGENS",
+    courses: ["TODOS"] // Português/Linguagens está em todos
   }
 ];
 
 export default function EducationalGames() {
-  const { user, loading } = useAuth(); // Usando o contexto otimizado
+  const { user, loading } = useAuth();
+  
+  // Estados para os dois filtros
+  const [selectedCourse, setSelectedCourse] = useState('TODOS');
   const [selectedArea, setSelectedArea] = useState('TODAS');
 
   // Extrai todas as categorias únicas da lista de jogos automaticamente
@@ -44,11 +54,18 @@ export default function EducationalGames() {
     return ['TODAS', ...uniqueCategories];
   }, []);
 
-  // Filtra os jogos com base na área selecionada
+  // Filtra os jogos cruzando Curso e Área
   const filteredGames = useMemo(() => {
-    if (selectedArea === 'TODAS') return STATIC_GAMES;
-    return STATIC_GAMES.filter(g => g.category === selectedArea);
-  }, [selectedArea]);
+    return STATIC_GAMES.filter(game => {
+      // Verifica Área
+      const matchArea = selectedArea === 'TODAS' || game.category === selectedArea;
+      
+      // Verifica Curso (Se o jogo for "TODOS", ele passa. Se o filtro for "TODOS", ele passa)
+      const matchCourse = selectedCourse === 'TODOS' || game.courses.includes('TODOS') || game.courses.includes(selectedCourse);
+      
+      return matchArea && matchCourse;
+    });
+  }, [selectedArea, selectedCourse]);
 
   if (loading) return <div className="h-screen flex items-center justify-center font-black text-slate-300 animate-pulse">CARREGANDO HUB DE JOGOS...</div>;
 
@@ -67,23 +84,52 @@ export default function EducationalGames() {
             </div>
           </header>
 
-          {/* BARRA DE FILTRO ESTILO GCOMPRIS (Por Área/Disciplina) */}
-          <div className="flex flex-wrap gap-3 mb-10">
-            {categories.map(area => (
-              <button
-                key={area}
-                onClick={() => setSelectedArea(area)}
-                className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all duration-300 shadow-sm border ${
-                  selectedArea === area 
-                    ? 'bg-indigo-600 text-white border-indigo-600 scale-105 shadow-indigo-200' 
-                    : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-indigo-400'
-                }`}
-              >
-                {area}
-              </button>
-            ))}
+          {/* PAINEL DE FILTROS DUPLOS */}
+          <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 space-y-5 animate-in fade-in slide-in-from-top-4">
+            
+            {/* Linha 1: Curso */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">Curso:</span>
+              <div className="flex flex-wrap gap-2">
+                {STATIC_COURSES.map(course => (
+                  <button
+                    key={course}
+                    onClick={() => setSelectedCourse(course)}
+                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 ${
+                      selectedCourse === course 
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-blue-500'
+                    }`}
+                  >
+                    {course}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Linha 2: Área / Disciplina */}
+            <div className="flex flex-col md:flex-row md:items-center gap-3">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">Área:</span>
+              <div className="flex flex-wrap gap-2">
+                {categories.map(area => (
+                  <button
+                    key={area}
+                    onClick={() => setSelectedArea(area)}
+                    className={`px-4 py-2 rounded-xl font-bold text-xs transition-all duration-300 ${
+                      selectedArea === area 
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200' 
+                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100 hover:text-indigo-500'
+                    }`}
+                  >
+                    {area}
+                  </button>
+                ))}
+              </div>
+            </div>
+
           </div>
 
+          {/* GRID DE JOGOS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {filteredGames.map(game => (
               <div key={game.id} className="bg-white rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-300 group overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
@@ -109,8 +155,8 @@ export default function EducationalGames() {
               </div>
             ))}
 
-            {/* Card de Breve - Só aparece quando estiver vendo "TODAS" as áreas */}
-            {selectedArea === 'TODAS' && (
+            {/* Card de Breve - Só aparece quando estiver vendo todas as opções para não poluir filtros específicos */}
+            {selectedArea === 'TODAS' && selectedCourse === 'TODOS' && (
               <div className="bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 p-8 flex flex-col items-center justify-center text-center opacity-60">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-2xl mb-4 shadow-sm">🧩</div>
                   <h4 className="font-black text-slate-400 uppercase text-xs tracking-widest">Novos Jogos</h4>
