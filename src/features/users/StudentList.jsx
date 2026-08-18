@@ -4,15 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
-import { useAuth } from "../../context/AuthContext"; // Import novo
+import { useAuth } from "../../context/AuthContext";
 
-// --- QUERIES OTIMIZADAS (Sem o 'me') ---
+// --- QUERIES E MUTATIONS ---
 const GET_STUDENT_PAGE_DATA = gql`
   query GetStudentData {
     myCourses { id name }
     myClasses { id name course { id name } }
     usersByInstitution { 
-      id firstName lastName username userType profileImage 
+      id firstName lastName username userType profileImage isActive
       classGroup { id name course { id name } } 
     }
   }
@@ -34,14 +34,25 @@ const UPDATE_STUDENT_BASIC = gql`
   }
 `;
 
+const TOGGLE_USER_STATUS = gql`
+  mutation ToggleUser($id: ID!, $isActive: Boolean!) {
+    toggleUserStatus(id: $id, isActive: $isActive) {
+      success
+    }
+  }
+`;
+
 export default function StudentList() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth(); // Pega o usuário do contexto global
+  const { user, loading: authLoading } = useAuth();
   const { data, loading, refetch, error } = useQuery(GET_STUDENT_PAGE_DATA);
+  
   const [createStudent] = useMutation(CREATE_STUDENT);
   const [updateStudent] = useMutation(UPDATE_STUDENT_BASIC);
+  const [toggleUser] = useMutation(TOGGLE_USER_STATUS);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState({ reg: '', courseId: '', classId: '', firstName: '', lastName: '', photo: null });
 
@@ -61,8 +72,9 @@ export default function StudentList() {
     return classes.filter(c => c.course?.id === form.courseId);
   }, [data, form.courseId]);
 
+  // Filtra apenas alunos ATIVOS para a listagem principal
   const filteredAndSortedStudents = useMemo(() => {
-    let list = (data?.usersByInstitution || []).filter(u => u.userType === 'student');
+    let list = (data?.usersByInstitution || []).filter(u => u.userType === 'student' && u.isActive);
     if (filterCourseId) list = list.filter(s => s.classGroup?.course?.id === filterCourseId);
     if (filterClassId) list = list.filter(s => s.classGroup?.id === filterClassId);
     return [...list].sort((a, b) => {
@@ -71,6 +83,11 @@ export default function StudentList() {
       return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     });
   }, [data, filterCourseId, filterClassId, sortOrder]);
+
+  // Filtra os alunos INATIVOS para o modal
+  const inactiveStudents = useMemo(() => {
+    return (data?.usersByInstitution || []).filter(u => u.userType === 'student' && !u.isActive);
+  }, [data]);
 
   const handleOpenEdit = (s) => {
     setEditingId(s.id);
@@ -83,6 +100,16 @@ export default function StudentList() {
       photo: null 
     });
     setIsModalOpen(true);
+  };
+
+  const handleToggleStatus = async (studentId, status) => {
+    try {
+      await toggleUser({ variables: { id: studentId, isActive: status } });
+      Swal.fire('Sucesso!', status ? 'Estudante ativado com sucesso.' : 'Estudante inativado com sucesso.', 'success');
+      refetch();
+    } catch (err) {
+      Swal.fire('Erro', err.message, 'error');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -111,9 +138,26 @@ export default function StudentList() {
       <div className="flex">
         <Sidebar user={user} />
         <main className="flex-1 p-6 md:p-10 max-w-7xl">
+          
+          {/* CABEÇALHO COM NOVO BOTÃO DE INATIVOS */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
             <h2 className="text-4xl font-black text-slate-800 italic tracking-tight">Alunos TEA</h2>
-            <button onClick={() => { setEditingId(null); setForm({reg:'', courseId: '', classId:'', firstName:'', lastName:'', photo: null}); setIsModalOpen(true); }} className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all">➕ Nova Matrícula</button>
+            <div className="flex gap-3">
+              {inactiveStudents.length > 0 && (
+                <button 
+                  onClick={() => setShowInactiveModal(true)} 
+                  className="bg-slate-200 text-slate-700 px-6 py-4 rounded-2xl font-bold hover:bg-slate-300 transition-colors"
+                >
+                  Inativos ({inactiveStudents.length})
+                </button>
+              )}
+              <button 
+                onClick={() => { setEditingId(null); setForm({reg:'', courseId: '', classId:'', firstName:'', lastName:'', photo: null}); setIsModalOpen(true); }} 
+                className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg hover:bg-indigo-700 transition-all"
+              >
+                ➕ Nova Matrícula
+              </button>
+            </div>
           </div>
 
           <div className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-slate-100 mb-8 grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
@@ -141,6 +185,15 @@ export default function StudentList() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {filteredAndSortedStudents.map(s => (
               <div key={s.id} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 group overflow-hidden relative">
+                
+                {/* BOTÃO DE INATIVAR NO CARD */}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleToggleStatus(s.id, false); }} 
+                  className="absolute top-6 right-6 text-red-400 hover:text-red-600 text-[10px] font-black uppercase tracking-widest z-20 transition-colors"
+                >
+                  Inativar
+                </button>
+
                 <div className="flex items-center gap-5 mb-8 relative z-10">
                    {s.profileImage ? <img src={s.profileImage} className="w-20 h-20 rounded-[1.8rem] object-cover border-4 border-slate-50 shadow-sm" alt="Perfil" /> : <div className="w-20 h-20 rounded-[1.8rem] bg-indigo-50 flex items-center justify-center text-3xl font-black text-indigo-300">{s.firstName?.charAt(0) || '🎓'}</div>}
                    <div className="overflow-hidden">
@@ -160,6 +213,7 @@ export default function StudentList() {
             ))}
           </div>
 
+          {/* MODAL MATRÍCULA E EDIÇÃO */}
           {isModalOpen && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
               <div className="bg-white w-full max-w-md rounded-[3rem] p-10 shadow-2xl animate-in zoom-in duration-200">
@@ -204,6 +258,40 @@ export default function StudentList() {
               </div>
             </div>
           )}
+
+          {/* NOVO MODAL: ALUNOS INATIVOS */}
+          {showInactiveModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+              <div className="bg-white p-10 rounded-[3rem] w-full max-w-lg shadow-2xl animate-in zoom-in duration-200">
+                <h3 className="text-2xl font-black mb-6 text-slate-800 italic">Alunos Inativos</h3>
+                
+                <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
+                  {inactiveStudents.map(student => (
+                    <div key={student.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div>
+                        <span className="font-bold text-slate-700 block text-lg">{student.firstName} {student.lastName}</span>
+                        <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">@{student.username}</span>
+                      </div>
+                      <button 
+                        onClick={() => handleToggleStatus(student.id, true)} 
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-xl text-xs font-bold shadow-sm transition-all"
+                      >
+                        Ativar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => setShowInactiveModal(false)} 
+                  className="mt-8 w-full py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover:bg-slate-200 transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          )}
+
         </main>
       </div>
     </div>
