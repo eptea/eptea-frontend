@@ -3,9 +3,6 @@ import NavBar from '../../layouts/Navbar';
 import Sidebar from '../../layouts/Sidebar';
 import { useAuth } from "../../context/AuthContext";
 
-// Lista estática de cursos para o filtro
-const STATIC_COURSES = ['TODOS', 'Adm', 'Agroindustria', 'Agropecuária', 'Zootecnia'];
-
 const STATIC_GAMES = [
   {
     id: 1,
@@ -13,7 +10,7 @@ const STATIC_GAMES = [
     description: "Jogo de arrastar e soltar para organizar as tarefas do dia a dia escolar, auxiliando na previsibilidade.",
     image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=400&q=80",
     category: "ORGANIZAÇÃO",
-    courses: ["TODOS"] // Aparece em todos os cursos
+    courses: ["Adm", "Agropecuária"] // Específico para estes cursos
   },
   {
     id: 2,
@@ -21,7 +18,7 @@ const STATIC_GAMES = [
     description: "Identifique expressões faciais e situações sociais para ganhar pontos e evoluir o avatar.",
     image: "https://images.unsplash.com/photo-1610116306796-6fea9f4fae38?w=400&q=80",
     category: "HABILIDADES SOCIAIS",
-    courses: ["TODOS"]
+    courses: ["Zootecnia"] // Específico para este curso
   },
   {
     id: 3,
@@ -44,23 +41,34 @@ const STATIC_GAMES = [
 export default function EducationalGames() {
   const { user, loading } = useAuth();
   
-  // Estados para os dois filtros
   const [selectedCourse, setSelectedCourse] = useState('TODOS');
   const [selectedArea, setSelectedArea] = useState('TODAS');
 
-  // Extrai todas as categorias únicas da lista de jogos automaticamente
+  // 1. Extrai dinamicamente apenas os Cursos que têm jogos cadastrados
+  const availableCourses = useMemo(() => {
+    const uniqueCourses = new Set();
+    STATIC_GAMES.forEach(game => {
+      game.courses.forEach(course => {
+        if (course !== 'TODOS') uniqueCourses.add(course);
+      });
+    });
+    // Retorna 'TODOS' e os cursos encontrados em ordem alfabética
+    return ['TODOS', ...Array.from(uniqueCourses).sort()];
+  }, []);
+
+  // 2. Extrai dinamicamente as Categorias (Áreas)
   const categories = useMemo(() => {
     const uniqueCategories = [...new Set(STATIC_GAMES.map(g => g.category))];
     return ['TODAS', ...uniqueCategories];
   }, []);
 
-  // Filtra os jogos cruzando Curso e Área
+  // 3. Filtro Cruzado (Curso + Área)
   const filteredGames = useMemo(() => {
     return STATIC_GAMES.filter(game => {
       // Verifica Área
       const matchArea = selectedArea === 'TODAS' || game.category === selectedArea;
       
-      // Verifica Curso (Se o jogo for "TODOS", ele passa. Se o filtro for "TODOS", ele passa)
+      // Verifica Curso (Aceita se o jogo for para "TODOS" ou se incluir o curso selecionado)
       const matchCourse = selectedCourse === 'TODOS' || game.courses.includes('TODOS') || game.courses.includes(selectedCourse);
       
       return matchArea && matchCourse;
@@ -87,11 +95,11 @@ export default function EducationalGames() {
           {/* PAINEL DE FILTROS DUPLOS */}
           <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 mb-10 space-y-5 animate-in fade-in slide-in-from-top-4">
             
-            {/* Linha 1: Curso */}
+            {/* Linha 1: Curso Dinâmico */}
             <div className="flex flex-col md:flex-row md:items-center gap-3">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">Curso:</span>
               <div className="flex flex-wrap gap-2">
-                {STATIC_COURSES.map(course => (
+                {availableCourses.map(course => (
                   <button
                     key={course}
                     onClick={() => setSelectedCourse(course)}
@@ -107,7 +115,7 @@ export default function EducationalGames() {
               </div>
             </div>
 
-            {/* Linha 2: Área / Disciplina */}
+            {/* Linha 2: Área / Disciplina Dinâmica */}
             <div className="flex flex-col md:flex-row md:items-center gap-3">
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">Área:</span>
               <div className="flex flex-wrap gap-2">
@@ -155,7 +163,7 @@ export default function EducationalGames() {
               </div>
             ))}
 
-            {/* Card de Breve - Só aparece quando estiver vendo todas as opções para não poluir filtros específicos */}
+            {/* Card de Breve - Só aparece quando estiver vendo todas as opções */}
             {selectedArea === 'TODAS' && selectedCourse === 'TODOS' && (
               <div className="bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 p-8 flex flex-col items-center justify-center text-center opacity-60">
                   <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-2xl mb-4 shadow-sm">🧩</div>
