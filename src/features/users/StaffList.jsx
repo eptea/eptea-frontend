@@ -8,7 +8,7 @@ import { useAuth } from "../../context/AuthContext";
 // --- QUERY OTIMIZADA ---
 const GET_STAFF_DATA = gql`
   query GetStaffData {
-    usersByInstitution { id firstName lastName userType username profileImage }
+    usersByInstitution { id firstName lastName userType username profileImage isActive }
   }
 `;
 
@@ -20,21 +20,39 @@ const CREATE_USER = gql`
   }
 `;
 
+// --- NOVA MUTATION PARA STATUS ---
+const TOGGLE_USER_STATUS = gql`
+  mutation ToggleUser($id: ID!, $isActive: Boolean!) {
+    toggleUserStatus(id: $id, isActive: $isActive) {
+      success
+    }
+  }
+`;
+
 export default function StaffList() {
   const { user: me, loading: authLoading } = useAuth(); // Usuário global
   const { data, loading, refetch, error } = useQuery(GET_STAFF_DATA);
+  
   const [createUser] = useMutation(CREATE_USER);
+  const [toggleUser] = useMutation(TOGGLE_USER_STATUS);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
   const [form, setForm] = useState({ reg: '', type: 'teacher' });
 
   if (loading || authLoading) return <div className="h-screen flex items-center justify-center font-black text-slate-300 animate-pulse text-xl">EPTEA: CARREGANDO DOCENTES...</div>;
   if (error) return <p className="p-20 text-center text-red-500 font-bold">Erro: {error.message}</p>;
 
-  const staff = (data?.usersByInstitution || []).filter(u => {
+  // Filtra primeiro quem o usuário logado tem permissão para ver
+  const allStaff = (data?.usersByInstitution || []).filter(u => {
     if (me?.userType === 'management') return u.userType === 'teacher' || u.userType === 'aee';
     if (me?.userType === 'aee') return u.userType === 'teacher';
     return false;
   });
+
+  // Separa ativos e inativos
+  const activeStaff = allStaff.filter(u => u.isActive);
+  const inactiveStaff = allStaff.filter(u => !u.isActive);
 
   const handleCreate = async (e) => {
     e.preventDefault();
@@ -45,20 +63,56 @@ export default function StaffList() {
     } catch (err) { Swal.fire('Erro', err.message, 'error'); }
   };
 
+  const handleToggleStatus = async (userId, status) => {
+    try {
+      await toggleUser({ variables: { id: userId, isActive: status } });
+      Swal.fire('Sucesso!', status ? 'Profissional ativado.' : 'Profissional inativado.', 'success');
+      refetch();
+    } catch (err) {
+      Swal.fire('Erro', err.message, 'error');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <NavBar user={me} />
       <div className="flex">
         <Sidebar user={me} />
         <main className="flex-1 p-6 md:p-10 max-w-7xl">
-          <div className="flex justify-between items-center mb-12">
+          
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-4">
             <h2 className="text-4xl font-black text-slate-800 italic tracking-tighter">Corpo Docente</h2>
-            <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-8 py-4 rounded-3xl font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2">➕ Novo Profissional</button>
+            
+            <div className="flex gap-3">
+              {inactiveStaff.length > 0 && (
+                <button 
+                  onClick={() => setShowInactiveModal(true)} 
+                  className="bg-slate-200 text-slate-700 px-6 py-4 rounded-3xl font-bold hover:bg-slate-300 transition-colors"
+                >
+                  Inativos ({inactiveStaff.length})
+                </button>
+              )}
+              <button 
+                onClick={() => setIsModalOpen(true)} 
+                className="bg-blue-600 text-white px-8 py-4 rounded-3xl font-bold shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2"
+              >
+                ➕ Novo Profissional
+              </button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {staff.map(u => (
-              <div key={u.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden">
+            {activeStaff.map(u => (
+              <div key={u.id} className="bg-white p-6 rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl transition-all group overflow-hidden relative">
+                
+                {/* BOTÃO INATIVAR NO CARD */}
+                <button 
+                  onClick={(e) => { e.stopPropagation(); handleToggleStatus(u.id, false); }} 
+                  className="absolute top-6 right-6 text-red-400 hover:text-red-600 text-[10px] font-black uppercase tracking-widest z-20 transition-colors"
+                >
+                  Inativar
+                </button>
+
                 <div className="flex items-center gap-5">
                   {u.profileImage ? (
                     <img src={u.profileImage} className="w-20 h-20 rounded-3xl object-cover shadow-sm" alt="Staff" />
@@ -78,8 +132,15 @@ export default function StaffList() {
                 </div>
               </div>
             ))}
+            
+            {activeStaff.length === 0 && (
+              <div className="col-span-full py-20 text-center bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
+                <p className="text-slate-400 font-bold">Nenhum profissional ativo no momento.</p>
+              </div>
+            )}
           </div>
 
+          {/* MODAL NOVO PROFISSIONAL */}
           {isModalOpen && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
               <div className="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in duration-200">
@@ -99,6 +160,42 @@ export default function StaffList() {
               </div>
             </div>
           )}
+
+          {/* MODAL PROFISSIONAIS INATIVOS */}
+          {showInactiveModal && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+              <div className="bg-white p-10 rounded-[3rem] w-full max-w-lg shadow-2xl animate-in zoom-in duration-200">
+                <h3 className="text-2xl font-black mb-6 text-slate-800 italic">Profissionais Inativos</h3>
+                
+                <div className="space-y-4 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
+                  {inactiveStaff.map(u => (
+                    <div key={u.id} className="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                      <div>
+                        <span className="font-bold text-slate-700 block text-lg">{u.firstName ? `${u.firstName} ${u.lastName}` : u.username}</span>
+                        <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">
+                          @{u.username} • {u.userType === 'aee' ? 'AEE' : 'Prof. Regular'}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => handleToggleStatus(u.id, true)} 
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-3 rounded-xl text-xs font-bold shadow-sm transition-all"
+                      >
+                        Ativar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <button 
+                  onClick={() => setShowInactiveModal(false)} 
+                  className="mt-8 w-full py-4 bg-slate-100 text-slate-500 font-bold rounded-2xl hover:bg-slate-200 transition-colors"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          )}
+
         </main>
       </div>
     </div>
