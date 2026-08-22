@@ -20,6 +20,7 @@ import { DocumentSection } from "../../components/dossie/DocumentSections";
 import { ModalDossie, ModalSubjectPlan } from "../../components/dossie/Modals";
 import StudentForum from "../../components/dossie/StudentForum";
 import AdaAssistantModal from "../../components/dossie/AdaAssistantModal";
+import AEEAttendanceModal from "../../components/dossie/AEEAttendanceModal"; // <-- Modal de Frequência Importado
 
 // --- QUERIES OTIMIZADAS (Sem a query 'me') ---
 const GET_STUDENT_DOSSIE = gql`
@@ -115,6 +116,7 @@ export default function StudentDossie() {
   const [isAdaOpen, setIsAdaOpen] = useState(false);
   const [form, setForm] = useState({});
   const [subjectForm, setSubjectForm] = useState({});
+  const [isAttendanceOpen, setIsAttendanceOpen] = useState(false); // <-- Controle de abertura do Modal
 
   useEffect(() => {
     if (data?.userById?.teaProfile) {
@@ -176,7 +178,30 @@ export default function StudentDossie() {
               <h1 className="text-4xl font-black text-slate-800 tracking-tighter italic">{student?.firstName} {student?.lastName}</h1>
               <p className="text-xs text-indigo-500 font-bold uppercase tracking-[0.2em] mt-2">Dossiê Pedagógico Ativo</p>
             </div>
-            {["aee", "management"].includes(user?.userType) && <button onClick={() => setIsEditingGlobal(true)} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-xl hover:bg-indigo-600 transition-all z-10">✏️ Ajustar Dossiê</button>}
+            
+            {/* --- ÁREA DE BOTÕES DO DOSSIÊ --- */}
+            <div className="flex flex-col sm:flex-row gap-3 z-10">
+              {/* Só aparece se for Gestão/AEE e se estiver na VISÃO GLOBAL (!currentSubjectId) */}
+              {!currentSubjectId && ["aee", "management"].includes(user?.userType) && (
+                <button 
+                  onClick={() => setIsAttendanceOpen(true)} 
+                  className="bg-indigo-100 text-indigo-700 px-6 py-4 rounded-2xl font-black text-xs shadow-sm hover:bg-indigo-200 transition-all border border-indigo-200"
+                >
+                  📅 Frequência AEE
+                </button>
+              )}
+              
+              {["aee", "management"].includes(user?.userType) && (
+                <button 
+                  onClick={() => setIsEditingGlobal(true)} 
+                  className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-xl hover:bg-indigo-600 transition-all"
+                >
+                  ✏️ Ajustar Dossiê
+                </button>
+              )}
+            </div>
+            {/* --------------------------------- */}
+
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -269,6 +294,15 @@ export default function StudentDossie() {
           teacherId={currentTeacherId}
         />
       )}
+
+      {/* MODAL DE FREQUÊNCIA AEE RENDERIZADO AQUI */}
+      <AEEAttendanceModal 
+        isOpen={isAttendanceOpen} 
+        onClose={() => setIsAttendanceOpen(false)} 
+        studentId={id} 
+        studentName={`${student?.firstName || ''} ${student?.lastName || ''}`.trim()}
+      />
+
     </div>
   );
 }
