@@ -264,13 +264,15 @@ export default function AEEAttendanceModal({
     // ==========================================================
     // VERIFICAR PROPRIETÁRIO
     // ==========================================================
-
+    const isManagement = currentUser?.userType === "management";
     const isOwner = idsMatch(record.aeeSpecialist?.id, currentUser?.id);
 
-    if (!isOwner) {
+    const canDelete = isManagement || isOwner;
+
+    if (!canDelete) {
       await Swal.fire({
         title: "Acesso negado",
-        text: "Você só pode excluir registros que você mesmo criou.",
+        text: "Você não tem permissão para excluir este registro.",
         icon: "warning",
       });
 
@@ -975,12 +977,13 @@ export default function AEEAttendanceModal({
                         // ==================================================
                         // VERIFICA SE O USUÁRIO LOGADO CRIOU O REGISTRO
                         // ==================================================
+                        const isManagement = currentUser?.userType === "management";  
 
                         const isOwner = idsMatch(
                           record.aeeSpecialist?.id,
                           currentUser?.id,
                         );
-
+                        const canDelete = isManagement || isOwner;
                         const specialistName = record.aeeSpecialist
                           ? `${record.aeeSpecialist.firstName || ""} ${
                               record.aeeSpecialist.lastName || ""
@@ -1069,7 +1072,7 @@ export default function AEEAttendanceModal({
                                   BOTÃO DE EXCLUIR
                               ================================================== */}
 
-                            {isOwner && (
+                            {canDelete  && (
                               <button
                                 type="button"
                                 onClick={() => handleDelete(record)}
