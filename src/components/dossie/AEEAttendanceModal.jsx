@@ -267,7 +267,6 @@ export default function AEEAttendanceModal({
 
     const isOwner = idsMatch(record.aeeSpecialist?.id, currentUser?.id);
 
-
     if (!isOwner) {
       await Swal.fire({
         title: "Acesso negado",
