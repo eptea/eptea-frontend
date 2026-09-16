@@ -191,28 +191,6 @@ export default function AEEAttendanceModal({
   const attendances = data?.aeeAttendancesByStudent || [];
 
   // ============================================================
-  // DEBUG
-  // ============================================================
-
-  console.log("========================================");
-  console.log("AEE ATTENDANCE - DEBUG");
-  console.log("Usuário atual:", currentUser);
-  console.log("ID usuário atual:", currentUser?.id);
-  console.log("Registros:", attendances);
-
-  attendances.forEach((record) => {
-    console.log("Registro:", record.id);
-    console.log("Criador:", record.aeeSpecialist);
-    console.log("ID criador:", record.aeeSpecialist?.id);
-    console.log(
-      "É proprietário?",
-      idsMatch(record.aeeSpecialist?.id, currentUser?.id),
-    );
-  });
-
-  console.log("========================================");
-
-  // ============================================================
   // AGRUPAR POR MÊS
   // ============================================================
 
@@ -289,11 +267,6 @@ export default function AEEAttendanceModal({
 
     const isOwner = idsMatch(record.aeeSpecialist?.id, currentUser?.id);
 
-    console.log("Tentando excluir registro:");
-    console.log("Registro:", record);
-    console.log("ID criador:", record.aeeSpecialist?.id);
-    console.log("ID usuário:", currentUser?.id);
-    console.log("É proprietário:", isOwner);
 
     if (!isOwner) {
       await Swal.fire({
