@@ -59,22 +59,16 @@ export default function AEEAttendanceModal({ isOpen, onClose, studentId, student
   const handlePrintPDF = (monthYear, monthData) => {
     const printWindow = window.open('', '_blank');
     
-    // Constrói as linhas da tabela dinamicamente incluindo o nome do profissional por dia
-    const tableRows = monthData.map(record => {
-      const specialistName = record.aeeSpecialist 
-        ? `${record.aeeSpecialist.firstName} ${record.aeeSpecialist.lastName || ''}`.trim() 
-        : 'Não identificado';
-
-      return `
-        <tr>
-          <td style="text-align: center; font-weight: bold;">${new Date(record.date).toLocaleDateString('pt-BR')}</td>
-          <td>${record.workedSkills}</td>
-          <td>${record.methodology}</td>
-          <td>${record.performance}</td>
-          <td style="text-align: center; font-size: 10px; font-weight: bold; color: #333;">${specialistName}</td>
-        </tr>
-      `;
-    }).join('');
+    // Constrói as linhas da tabela dinamicamente
+    const tableRows = monthData.map(record => `
+      <tr>
+        <td style="text-align: center; font-weight: bold;">${new Date(record.date).toLocaleDateString('pt-BR')}</td>
+        <td>${record.workedSkills}</td>
+        <td>${record.methodology}</td>
+        <td>${record.performance}</td>
+        <td><div style="border-bottom: 1px solid #ccc; height: 30px; margin-top: 10px;"></div></td>
+      </tr>
+    `).join('');
 
     printWindow.document.write(`
       <html>
@@ -91,7 +85,7 @@ export default function AEEAttendanceModal({ isOpen, onClose, studentId, student
             th { background-color: #f2f2f2; font-size: 11px; text-transform: uppercase; padding: 8px; border: 1px solid #000; }
             td { border: 1px solid #000; padding: 8px; font-size: 11px; vertical-align: top; }
             .signatures { display: flex; justify-content: space-between; margin-top: 50px; text-align: center; font-size: 10px; }
-            .sig-box { width: 28%; border-top: 1px solid #000; padding-top: 5px; }
+            .sig-box { width: 22%; border-top: 1px solid #000; padding-top: 5px; }
             @media print { @page { size: landscape; } }
           </style>
         </head>
@@ -107,7 +101,8 @@ export default function AEEAttendanceModal({ isOpen, onClose, studentId, student
           <h3>Referência: ${monthYear}</h3>
 
           <div class="info-box">
-            <strong>ESTUDANTE:</strong> ${studentName.toUpperCase()}
+            <strong>ESTUDANTE:</strong> ${studentName.toUpperCase()}<br>
+            <strong>ESPECIALISTA AEE:</strong> ${monthData[0]?.aeeSpecialist?.firstName?.toUpperCase() || 'NÃO IDENTIFICADO'}
           </div>
 
           <table>
@@ -117,15 +112,16 @@ export default function AEEAttendanceModal({ isOpen, onClose, studentId, student
                 <th width="25%">Habilidades Trabalhadas</th>
                 <th width="25%">Metodologia</th>
                 <th width="20%">Desempenho</th>
-                <th width="20%">Profissional Responsável</th>
+                <th width="20%">Assinatura do Estudante</th>
               </tr>
             </thead>
             <tbody>
-              {tableRows}
+              ${tableRows}
             </tbody>
           </table>
 
           <div class="signatures">
+            <div class="sig-box">Assinatura do AEE</div>
             <div class="sig-box">Assinatura do Responsável</div>
             <div class="sig-box">Assinatura NAPNE</div>
           </div>
@@ -211,7 +207,7 @@ export default function AEEAttendanceModal({ isOpen, onClose, studentId, student
                           </div>
                           <div className="flex-1">
                             <p className="text-xs font-bold text-slate-700 line-clamp-1"><span className="text-slate-400">Hab:</span> {record.workedSkills}</p>
-                            <p className="text-[10px] text-slate-500 mt-1">Profissional: <span className="font-bold">{record.aeeSpecialist?.firstName} {record.aeeSpecialist?.lastName}</span></p>
+                            <p className="text-[10px] text-slate-500 mt-1 line-clamp-1">Resp: {record.aeeSpecialist?.firstName}</p>
                           </div>
                         </div>
                       ))}
