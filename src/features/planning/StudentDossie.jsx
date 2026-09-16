@@ -301,6 +301,7 @@ export default function StudentDossie() {
         onClose={() => setIsAttendanceOpen(false)} 
         studentId={id} 
         studentName={`${student?.firstName || ''} ${student?.lastName || ''}`.trim()}
+        currentUser={user}
       />
 
     </div>
