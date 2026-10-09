@@ -25,7 +25,7 @@ export function ModalDossie({ form, setForm, onClose, onSave }) {
     return (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-md flex items-center justify-center z-[100] p-4">
             <div className="bg-white w-full max-w-5xl rounded-[3.5rem] shadow-2xl p-10 flex flex-col max-h-[90vh]">
-                <h2 className="text-3xl font-black mb-4 italic">Editar Dossiê Institucional</h2>
+                <h2 className="text-3xl font-black mb-4 italic">Editar Anamnese Institucional</h2>
                 
                 {/* --- SELETOR DE NÍVEL DE ADAPTAÇÃO --- */}
                 <div className="mb-8 p-6 bg-slate-50 rounded-[2rem] border-2 border-dashed border-slate-200">
@@ -70,7 +70,7 @@ export function ModalDossie({ form, setForm, onClose, onSave }) {
                         Cancelar
                     </button>
                     <button onClick={onSave} className="px-10 py-4 rounded-2xl bg-indigo-600 text-white font-black shadow-lg shadow-indigo-200 hover:scale-105 active:scale-95 transition-all">
-                        Salvar Dossiê
+                        Salvar Anamnese
                     </button>
                 </div>
             </div>
