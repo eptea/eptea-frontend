@@ -13,7 +13,7 @@ export default function Sidebar({ user }) {
     { label: 'Instituições', icon: '🏢', path: '/institutions', roles: ['superuser'] },
 
     // Itens das Escolas (Ocultos para o Superuser)
-    { label: 'Alunos TEA', icon: '🎓', path: '/students', roles: ['management', 'aee'] },
+    { label: 'Corpo Discente', icon: '🎓', path: '/students', roles: ['management', 'aee'] },
     { label: 'Cursos e Turmas', icon: '🏫', path: '/courses', roles: ['management', 'aee', 'teacher'] },
     { label: 'Corpo Docente', icon: '👥', path: '/staff', roles: ['management', 'aee'] },
     { label: 'Jogos Educativos', icon: '🎮', path: '/games', roles: ['management', 'aee', 'teacher'] },
