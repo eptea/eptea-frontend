@@ -70,7 +70,7 @@ export default function Login() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-2 tracking-widest">Usuário ou Matrícula</label>
+            <label className="block text-[10px] font-black text-slate-400 uppercase mb-2 ml-2 tracking-widest">Usuário</label>
             <input 
               className="w-full px-5 py-4 rounded-2xl bg-slate-50 border-none focus:ring-2 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-300 font-bold text-slate-700"
               placeholder="Digite seu username" 
