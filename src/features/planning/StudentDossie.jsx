@@ -176,7 +176,7 @@ export default function StudentDossie() {
             </div>
             <div className="flex-1 text-center md:text-left z-10">
               <h1 className="text-4xl font-black text-slate-800 tracking-tighter italic">{student?.firstName} {student?.lastName}</h1>
-              <p className="text-xs text-indigo-500 font-bold uppercase tracking-[0.2em] mt-2">Dossiê Pedagógico Ativo</p>
+              <p className="text-xs text-indigo-500 font-bold uppercase tracking-[0.2em] mt-2">Perfil do Estudante</p>
             </div>
             
             {/* --- ÁREA DE BOTÕES DO DOSSIÊ --- */}
@@ -196,7 +196,7 @@ export default function StudentDossie() {
                   onClick={() => setIsEditingGlobal(true)} 
                   className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs shadow-xl hover:bg-indigo-600 transition-all"
                 >
-                  ✏️ Ajustar Dossiê
+                  ✏️ Ajustar Anamnese
                 </button>
               )}
             </div>
@@ -242,7 +242,7 @@ export default function StudentDossie() {
                   <h2 className="font-black text-xs uppercase text-slate-800 tracking-widest flex items-center gap-2"><span>📄</span> Documentação</h2>
                   
                   <DocumentSection
-                    title="PDIs e Planos"
+                    title="Planos e encaminhamentos do AEE"
                     user={user}
                     docs={student?.documents?.filter((d) => d.subject === null && d.category !== "MEDICAL")}
                     color="indigo"
@@ -254,7 +254,7 @@ export default function StudentDossie() {
 
                   {currentSubjectId && (
                     <DocumentSection
-                      title="Materiais da Aula"
+                      title="Planos e Encaminhamentos Docente"
                       user={user}
                       docs={student?.documents?.filter((d) => d.subject?.id === currentSubjectId)}
                       color="slate"
