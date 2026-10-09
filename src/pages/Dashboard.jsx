@@ -158,7 +158,7 @@ export default function Dashboard() {
             ) : (
               <>
                 <StatCard
-                  title="Alunos TEA"
+                  title="Alunos"
                   value={stats.totalStudents}
                   detail="Total da instituição"
                   icon="🎓"
