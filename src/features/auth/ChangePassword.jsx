@@ -106,7 +106,7 @@ export default function ChangePassword() {
 
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1">
-              Senha Atual (Sua matrícula)
+              Senha Atual (Seu Usuário)
             </label>
 
             <div className="relative">
